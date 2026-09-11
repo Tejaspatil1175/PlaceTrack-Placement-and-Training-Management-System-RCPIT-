@@ -9,6 +9,7 @@ import { NotFoundPage } from '../pages/NotFoundPage';
 
 // Features
 import { DashboardPage } from '../features/dashboard/DashboardPage';
+
 import { StudentsListPage } from '../features/students/StudentsListPage';
 import { StudentDetailPage } from '../features/students/StudentDetailPage';
 import { StudentImportPage } from '../features/students/StudentImportPage';
@@ -21,14 +22,16 @@ import { DriveEligibleStudentsPage } from '../features/drives/DriveEligibleStude
 import { ApplicationsPage } from '../features/applications/ApplicationsPage';
 import { ApplicationDetailPage } from '../features/applications/ApplicationDetailPage';
 
+import { NotificationsPage } from '../features/notifications/NotificationsPage';
+import { NotificationCreatePage } from '../features/notifications/NotificationCreatePage';
+
+import { EventsPage } from '../features/events/EventsPage';
+import { EventCreatePage } from '../features/events/EventCreatePage';
+
 import {
   DepartmentsPage,
   CoordinatorsPage,
   CoordinatorCreatePage,
-  NotificationsPage,
-  NotificationCreatePage,
-  EventsPage,
-  EventCreatePage,
   AnalyticsPage,
   ReportsPage,
   UploadLogsPage,
@@ -132,7 +135,7 @@ export function AppRoutes() {
           }
         />
 
-        {/* /applications — officer, coordinator, student (Single shared feature) */}
+        {/* /applications — officer, coordinator, student */}
         <Route path="/applications" element={<ApplicationsPage />} />
         <Route
           path="/applications/:id"
