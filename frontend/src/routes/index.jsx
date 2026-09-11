@@ -18,12 +18,13 @@ import { DriveCreatePage } from '../features/drives/DriveCreatePage';
 import { DriveDetailPage } from '../features/drives/DriveDetailPage';
 import { DriveEligibleStudentsPage } from '../features/drives/DriveEligibleStudentsPage';
 
+import { ApplicationsPage } from '../features/applications/ApplicationsPage';
+import { ApplicationDetailPage } from '../features/applications/ApplicationDetailPage';
+
 import {
   DepartmentsPage,
   CoordinatorsPage,
   CoordinatorCreatePage,
-  ApplicationsPage,
-  ApplicationDetailPage,
   NotificationsPage,
   NotificationCreatePage,
   EventsPage,
@@ -111,7 +112,7 @@ export function AppRoutes() {
           }
         />
 
-        {/* /drives — officer, coordinator, student (Single shared feature) */}
+        {/* /drives — officer, coordinator, student */}
         <Route path="/drives" element={<DrivesListPage />} />
         <Route
           path="/drives/new"
@@ -131,12 +132,12 @@ export function AppRoutes() {
           }
         />
 
-        {/* /applications — officer, coordinator, student */}
+        {/* /applications — officer, coordinator, student (Single shared feature) */}
         <Route path="/applications" element={<ApplicationsPage />} />
         <Route
           path="/applications/:id"
           element={
-            <ProtectedRoute allowedRoles={['student']}>
+            <ProtectedRoute allowedRoles={['student', 'tpo', 'coordinator']}>
               <ApplicationDetailPage />
             </ProtectedRoute>
           }
