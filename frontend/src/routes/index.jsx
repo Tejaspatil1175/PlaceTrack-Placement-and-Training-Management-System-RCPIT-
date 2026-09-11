@@ -28,17 +28,17 @@ import { NotificationCreatePage } from '../features/notifications/NotificationCr
 import { EventsPage } from '../features/events/EventsPage';
 import { EventCreatePage } from '../features/events/EventCreatePage';
 
-import {
-  DepartmentsPage,
-  CoordinatorsPage,
-  CoordinatorCreatePage,
-  AnalyticsPage,
-  ReportsPage,
-  UploadLogsPage,
-  StudentProfilePage,
-  StudentAcademicsPage,
-  SettingsPage,
-} from '../pages/PlaceholderPages';
+import { AnalyticsPage } from '../features/analytics/AnalyticsPage';
+import { ReportsPage } from '../features/reports/ReportsPage';
+import { UploadLogsPage } from '../features/upload-logs/UploadLogsPage';
+import { CoordinatorsPage } from '../features/coordinators/CoordinatorsPage';
+import { CoordinatorCreatePage } from '../features/coordinators/CoordinatorCreatePage';
+import { DepartmentsPage } from '../features/departments/DepartmentsPage';
+import { SettingsPage } from '../features/settings/SettingsPage';
+
+import { StudentProfilePage } from '../features/student-self/StudentProfilePage';
+import { StudentAcademicsPage } from '../features/student-self/StudentAcademicsPage';
+
 
 export function AppRoutes() {
   return (
@@ -188,11 +188,11 @@ export function AppRoutes() {
           }
         />
 
-        {/* /upload-logs — officer only */}
+        {/* /upload-logs — officer, coordinator */}
         <Route
           path="/upload-logs"
           element={
-            <ProtectedRoute allowedRoles={['tpo']}>
+            <ProtectedRoute allowedRoles={['tpo', 'coordinator']}>
               <UploadLogsPage />
             </ProtectedRoute>
           }

@@ -21,3 +21,9 @@ export const bulkUploadStudentsApi = async (formData) => {
   });
   return response.data;
 };
+
+export const getStudentAcademicsApi = async (id = 'me') => {
+  const response = await apiClient.get(`/students/${id}/academics`);
+  return response.data;
+};
+
