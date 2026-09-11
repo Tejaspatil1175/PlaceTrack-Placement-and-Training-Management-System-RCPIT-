@@ -5,12 +5,36 @@
 @layer base {
   body {
     font-family: 'Inter', sans-serif;
-    background-color: #F7F8FA;
-    color: #1A2733;
+    background-color: #F5F0E6; /* Warm Beige background */
+    color: #18181B; /* Dark Charcoal / Slate text */
     -webkit-font-smoothing: antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Sora', 'Lexend', sans-serif;
+  }
+}
+
+@layer utilities {
+  /* Full White Card with Dark Grey Thin Border & Pop-Up Effect */
+  .card-pop {
+    background-color: #FFFFFF;
+    border: 1px solid #3F3F46; /* Dark Grey Thin Border */
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+  }
+  .card-pop:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 28px -6px rgba(24, 24, 27, 0.16), 0 6px 12px -4px rgba(24, 24, 27, 0.10);
+    border-color: #18181B !important;
+  }
+
+  /* Crisp Dark Grey Thin Border Class */
+  .border-thin-dark {
+    border: 1px solid #3F3F46 !important;
+  }
+
+  /* Beige Surface Highlight */
+  .bg-beige-surface {
+    background-color: #FAF8F5;
   }
 }

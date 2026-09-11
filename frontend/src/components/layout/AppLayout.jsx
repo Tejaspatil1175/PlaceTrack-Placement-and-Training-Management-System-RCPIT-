@@ -17,12 +17,9 @@ import {
   BookOpen,
   Settings,
   LogOut,
-  Menu,
-  X,
   ChevronDown,
   ShieldCheck,
-  PanelLeftClose,
-  PanelLeftOpen,
+  Sparkles,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -82,7 +79,7 @@ const NAV_ITEMS = [
   },
   {
     path: '/reports',
-    label: 'Placement Reports',
+    label: 'Reports',
     icon: FileSpreadsheet,
     roles: ['tpo'],
   },
@@ -100,7 +97,7 @@ const NAV_ITEMS = [
   },
   {
     path: '/academics',
-    label: 'Academic History',
+    label: 'Academics',
     icon: BookOpen,
     roles: ['student'],
   },
@@ -112,25 +109,12 @@ const NAV_ITEMS = [
   },
 ];
 
-// Student Mobile Bottom Nav Items
-const STUDENT_MOBILE_NAV = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/drives', label: 'Drives', icon: Briefcase },
-  { path: '/applications', label: 'Applications', icon: FileCheck },
-  { path: '/notifications', label: 'Alerts', icon: Bell },
-  { path: '/profile', label: 'Profile', icon: User },
-];
-
 export function AppLayout() {
   const { user, role } = useAuth();
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
 
   const normalizedRole = role === 'officer' ? 'tpo' : role || 'student';
-  const isStudent = normalizedRole === 'student';
-
   const visibleNavItems = NAV_ITEMS.filter((item) =>
     item.roles.includes(normalizedRole)
   );
@@ -143,262 +127,157 @@ export function AppLayout() {
   const getRoleBadge = (r) => {
     switch (r) {
       case 'tpo':
-        return { label: 'T&P Officer', color: 'bg-accent-500 text-white' };
+        return { label: 'Main T&P Officer', bg: 'bg-beige-200 border-zinc-700 text-zinc-900' };
       case 'coordinator':
-        return { label: 'Coordinator', color: 'bg-primary-500 text-white' };
+        return { label: 'Dept Coordinator', bg: 'bg-beige-100 border-zinc-700 text-zinc-900' };
       case 'student':
-        return { label: 'Student', color: 'bg-success-600 text-white' };
+        return { label: 'Student Portal', bg: 'bg-emerald-100 border-emerald-800 text-emerald-900' };
       default:
-        return { label: r, color: 'bg-text-muted text-white' };
+        return { label: r, bg: 'bg-zinc-100 border-zinc-700 text-zinc-900' };
     }
   };
 
   const roleBadge = getRoleBadge(normalizedRole);
 
   return (
-    <div className="h-screen w-full flex overflow-hidden bg-bg-base text-text-primary antialiased">
-      {/* Sidebar Desktop/Tablet Collapsible - Fixed Position */}
-      <aside
-        className={`hidden lg:flex ${
-          collapsed ? 'w-16' : 'w-64'
-        } h-screen bg-primary-900 text-white flex-col shrink-0 border-r border-primary-700 select-none transition-all duration-300 z-30`}
-      >
-        {/* Brand Header */}
-        <div className="h-16 px-4 flex items-center justify-between border-b border-primary-700 bg-primary-900">
-          <div className="flex items-center space-x-3 overflow-hidden">
-            <div className="w-9 h-9 rounded-lg bg-accent-500 flex items-center justify-center font-heading font-bold text-white text-lg shadow-sm shrink-0">
-              PT
-            </div>
-            {!collapsed && (
-              <div className="truncate">
-                <span className="font-heading font-bold text-lg text-white block tracking-tight">
-                  PlaceTrack
-                </span>
-                <span className="text-[10px] text-primary-100/70 uppercase tracking-wider font-semibold block">
-                  RCPIT Shirpur
-                </span>
-              </div>
-            )}
+    <div className="min-h-screen w-full flex flex-col bg-[#F5F0E6] text-zinc-900 antialiased font-sans">
+      {/* Top Header Navigation Bar (Full White with Dark Grey Thin Border) */}
+      <header className="h-16 bg-white border-b-2 border-zinc-800 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-50 shadow-xs">
+        {/* Brand & System Badge */}
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center font-heading font-extrabold text-white text-xl border border-zinc-800 shadow-sm shrink-0">
+            PT
           </div>
-          <button
-            type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="p-1.5 rounded-lg text-primary-100/70 hover:text-white hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            {collapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
-          </button>
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="font-heading font-bold text-lg text-zinc-900 tracking-tight leading-none">
+                PlaceTrack
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-beige-100 text-zinc-900 border-zinc-700">
+                RCPIT Shirpur
+              </span>
+            </div>
+            <span className="text-[11px] text-zinc-600 font-medium block mt-0.5">
+              Placement & Training Management System
+            </span>
+          </div>
         </div>
 
-        {/* Navigation Section */}
-        <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-          {!collapsed && (
-            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-primary-100/50">
-              Main Menu
+        {/* Right User & Role Menu */}
+        <div className="relative flex items-center space-x-3">
+          <span className={`hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${roleBadge.bg}`}>
+            <Sparkles className="w-3.5 h-3.5 mr-1 text-amber-700" />
+            {roleBadge.label}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+            aria-label="User account menu"
+            className="flex items-center space-x-3 p-1.5 rounded-xl bg-white hover:bg-beige-100 border border-zinc-700 transition-all focus:outline-none focus:ring-2 focus:ring-zinc-800"
+          >
+            <div className="w-8 h-8 rounded-full bg-zinc-900 text-white font-heading font-bold text-xs flex items-center justify-center border border-zinc-800 shadow-xs">
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <div className="hidden md:block text-left">
+              <span className="block text-xs font-bold text-zinc-900 leading-tight">
+                {user?.name || 'User Account'}
+              </span>
+              <span className="block text-[10px] text-zinc-500 font-medium truncate max-w-[140px]">
+                {user?.email || user?.prn || 'rcpit.ac.in'}
+              </span>
+            </div>
+            <ChevronDown className="w-4 h-4 text-zinc-600" />
+          </button>
+
+          {/* User Account Dropdown */}
+          {userDropdownOpen && (
+            <div
+              className="absolute right-0 top-12 w-60 bg-white border-2 border-zinc-800 rounded-2xl shadow-xl py-2 z-50"
+              onMouseLeave={() => setUserDropdownOpen(false)}
+            >
+              <div className="px-4 py-2.5 border-b border-zinc-300 bg-beige-50 rounded-t-2xl">
+                <p className="text-xs font-bold text-zinc-900">{user?.name}</p>
+                <p className="text-[11px] text-zinc-600 truncate">{user?.email}</p>
+                {user?.prn && (
+                  <p className="text-[10px] text-zinc-800 font-mono font-bold mt-0.5">PRN: {user.prn}</p>
+                )}
+              </div>
+
+              {normalizedRole === 'student' && (
+                <NavLink
+                  to="/profile"
+                  onClick={() => setUserDropdownOpen(false)}
+                  className="flex items-center space-x-2.5 px-4 py-2.5 text-xs font-bold text-zinc-800 hover:bg-beige-100 transition-colors"
+                >
+                  <User className="w-4 h-4 text-zinc-700" />
+                  <span>My Student Profile</span>
+                </NavLink>
+              )}
+
+              <NavLink
+                to="/settings"
+                onClick={() => setUserDropdownOpen(false)}
+                className="flex items-center space-x-2.5 px-4 py-2.5 text-xs font-bold text-zinc-800 hover:bg-beige-100 transition-colors"
+              >
+                <Settings className="w-4 h-4 text-zinc-700" />
+                <span>Account Settings</span>
+              </NavLink>
+
+              <div className="border-t border-zinc-300 my-1"></div>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full flex items-center space-x-2.5 px-4 py-2.5 text-xs text-rose-700 hover:bg-rose-50 font-bold transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </button>
             </div>
           )}
+        </div>
+      </header>
+
+      {/* Horizontal Primary Navigation Bar (Beige Ribbon with Dark Grey Thin Borders) */}
+      <nav className="bg-[#FAF8F5] border-b-2 border-zinc-800 py-3 px-4 lg:px-8 sticky top-16 z-40 shadow-sm overflow-x-auto">
+        <div className="max-w-7xl mx-auto flex items-center space-x-2">
           {visibleNavItems.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
-                title={collapsed ? item.label : undefined}
                 className={({ isActive }) =>
-                  `flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  `flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-200 focus:outline-none ${
                     isActive
-                      ? 'bg-primary-700 text-white shadow-xs font-semibold'
-                      : 'text-primary-100/80 hover:bg-primary-700/50 hover:text-white'
+                      ? 'bg-zinc-900 text-white shadow-md border-2 border-zinc-800 scale-[1.02]'
+                      : 'bg-white text-zinc-800 border border-zinc-700/50 hover:bg-beige-100 hover:border-zinc-800 hover:shadow-xs'
                   }`
                 }
               >
                 <Icon className="w-4 h-4 shrink-0" />
-                {!collapsed && <span className="truncate">{item.label}</span>}
+                <span>{item.label}</span>
               </NavLink>
             );
           })}
         </div>
+      </nav>
 
-        {/* Sidebar Footer */}
-        {!collapsed && (
-          <div className="p-4 border-t border-primary-700 text-xs text-primary-100/60 flex items-center justify-between">
-            <span>Role: <strong className="text-white capitalize">{normalizedRole}</strong></span>
-            <span className="text-[10px] bg-primary-700 px-2 py-0.5 rounded text-accent-500 font-mono">v1.0</span>
-          </div>
-        )}
-      </aside>
+      {/* Main Content View (Centered Container on Warm Beige Canvas) */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8">
+        <Outlet />
+      </main>
 
-      {/* Mobile Drawer (All Roles) */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
-          <div
-            className="fixed inset-0 bg-primary-900/80 backdrop-blur-xs"
-            onClick={() => setMobileMenuOpen(false)}
-          ></div>
-          <aside className="relative w-64 bg-primary-900 text-white flex flex-col z-10">
-            <div className="h-16 px-6 flex items-center justify-between border-b border-primary-700">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-lg bg-accent-500 flex items-center justify-center font-heading font-bold text-white">
-                  PT
-                </div>
-                <span className="font-heading font-bold text-white text-base">PlaceTrack</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                aria-label="Close navigation menu"
-                className="p-1 rounded-md text-primary-100 hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-              {visibleNavItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                        isActive
-                          ? 'bg-primary-700 text-white font-semibold'
-                          : 'text-primary-100/80 hover:bg-primary-700/50 hover:text-white'
-                      }`
-                    }
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                );
-              })}
-            </div>
-          </aside>
+      {/* Modern Footer */}
+      <footer className="bg-white border-t-2 border-zinc-800 py-4 px-6 text-center text-xs font-bold text-zinc-600">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+          <span>PlaceTrack Campus Placement System • R.C. Patel Institute of Technology, Shirpur</span>
+          <span className="font-mono text-[11px] bg-beige-100 border border-zinc-700 px-2.5 py-0.5 rounded-full text-zinc-900">
+            Version 1.0 • Stable Release
+          </span>
         </div>
-      )}
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
-        {/* Topbar */}
-        <header className="h-16 shrink-0 bg-bg-surface border-b border-border-subtle px-4 lg:px-8 flex items-center justify-between z-30 shadow-2xs">
-          <div className="flex items-center space-x-3">
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(true)}
-              aria-label="Open mobile menu"
-              className="lg:hidden p-2 rounded-lg text-text-secondary hover:bg-bg-base focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <div className="hidden sm:flex items-center space-x-2 text-xs text-text-muted">
-              <ShieldCheck className="w-4 h-4 text-success-600" />
-              <span>Placement & Training System — RCPIT Shirpur</span>
-            </div>
-          </div>
-
-          {/* User Profile Menu */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              aria-label="User account menu"
-              className="flex items-center space-x-3 p-1.5 rounded-lg hover:bg-bg-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <div className="w-8 h-8 rounded-full bg-primary-700 text-white font-heading font-semibold text-xs flex items-center justify-center shadow-xs">
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-              </div>
-              <div className="hidden md:block text-left">
-                <span className="block text-xs font-semibold text-text-primary leading-tight">
-                  {user?.name || 'User Account'}
-                </span>
-                <span className="block text-[10px] text-text-muted">
-                  {user?.email || user?.prn || 'rcpit.ac.in'}
-                </span>
-              </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${roleBadge.color}`}>
-                {roleBadge.label}
-              </span>
-              <ChevronDown className="w-3.5 h-3.5 text-text-muted" />
-            </button>
-
-            {/* Dropdown Card */}
-            {userDropdownOpen && (
-              <div
-                className="absolute right-0 mt-2 w-56 bg-bg-surface border border-border-subtle rounded-xl shadow-lg py-1.5 z-40"
-                onMouseLeave={() => setUserDropdownOpen(false)}
-              >
-                <div className="px-4 py-2 border-b border-border-subtle">
-                  <p className="text-xs font-bold text-text-primary">{user?.name}</p>
-                  <p className="text-[11px] text-text-muted truncate">{user?.email}</p>
-                  {user?.prn && (
-                    <p className="text-[10px] text-primary-500 font-mono mt-0.5">PRN: {user.prn}</p>
-                  )}
-                </div>
-
-                {normalizedRole === 'student' && (
-                  <NavLink
-                    to="/profile"
-                    onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center space-x-2 px-4 py-2 text-xs text-text-primary hover:bg-bg-base focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <User className="w-3.5 h-3.5" />
-                    <span>My Profile</span>
-                  </NavLink>
-                )}
-
-                <NavLink
-                  to="/settings"
-                  onClick={() => setUserDropdownOpen(false)}
-                  className="flex items-center space-x-2 px-4 py-2 text-xs text-text-primary hover:bg-bg-base focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                  <span>Account Settings</span>
-                </NavLink>
-
-                <div className="border-t border-border-subtle my-1"></div>
-
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="w-full flex items-center space-x-2 px-4 py-2 text-xs text-error-600 hover:bg-error-100/50 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </header>
-
-        {/* Page Content Outlet */}
-        <main className={`flex-1 p-4 lg:p-8 overflow-y-auto ${isStudent ? 'pb-20 md:pb-8' : ''}`}>
-          <Outlet />
-        </main>
-
-        {/* Student-Specific Mobile Bottom Navigation (< 768px) */}
-        {isStudent && (
-          <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-bg-surface border-t border-border-subtle z-40 flex items-center justify-around px-2 shadow-lg">
-            {STUDENT_MOBILE_NAV.map((nav) => {
-              const Icon = nav.icon;
-              return (
-                <NavLink
-                  key={nav.path}
-                  to={nav.path}
-                  className={({ isActive }) =>
-                    `flex flex-col items-center justify-center space-y-1 py-1 px-3 rounded-lg text-[10px] font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                      isActive ? 'text-primary-900 bg-primary-100/50 font-bold' : 'text-text-muted hover:text-primary-700'
-                    }`
-                  }
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{nav.label}</span>
-                </NavLink>
-              );
-            })}
-          </nav>
-        )}
-      </div>
+      </footer>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { StatCard } from '../../components/ui/StatCard';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import {
@@ -11,6 +10,9 @@ import {
   ArrowRight,
   Clock,
   Building2,
+  FileSpreadsheet,
+  Plus,
+  ExternalLink,
 } from 'lucide-react';
 import {
   BarChart,
@@ -28,15 +30,10 @@ export function CoordinatorDashboardView({ data, isLoading, user }) {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Skeleton variant="card" />
-          <Skeleton variant="card" />
-          <Skeleton variant="card" />
-          <Skeleton variant="card" />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Skeleton className="h-72 w-full rounded-xl" />
-          <Skeleton className="h-72 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <Skeleton className="lg:col-span-8 h-96 rounded-2xl" />
+          <Skeleton className="lg:col-span-4 h-96 rounded-2xl" />
         </div>
       </div>
     );
@@ -44,7 +41,7 @@ export function CoordinatorDashboardView({ data, isLoading, user }) {
 
   const deptName = user?.departmentName || 'Computer Engineering';
 
-  // Fallback / Mock data scoped to Coordinator's department
+  // Fallback / Mock analytical data scoped to Coordinator
   const stats = data?.stats || {
     deptStudents: 120,
     activeDrives: 18,
@@ -58,14 +55,6 @@ export function CoordinatorDashboardView({ data, isLoading, user }) {
     { division: 'Div A', rate: 76, placed: 28 },
     { division: 'Div B', rate: 68, placed: 24 },
     { division: 'Div C', rate: 62, placed: 20 },
-  ];
-
-  const trendData = data?.yearlyTrend || [
-    { year: '2021', placed: 32, rate: 50 },
-    { year: '2022', placed: 38, rate: 55 },
-    { year: '2023', placed: 42, rate: 58 },
-    { year: '2024', placed: 45, rate: 62 },
-    { year: '2025', placed: 48, rate: 64 },
   ];
 
   const upcomingDrives = data?.upcomingDrives || [
@@ -83,175 +72,136 @@ export function CoordinatorDashboardView({ data, isLoading, user }) {
 
   return (
     <div className="space-y-6">
-      {/* Coordinator Prominent Department Header Banner */}
-      <div className="bg-primary-900 text-white p-6 rounded-xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-primary-700 border border-primary-500 text-accent-500 text-xs font-semibold uppercase tracking-wider mb-2">
-            <Building2 className="w-3.5 h-3.5" />
-            <span>Department Scoped Workflow</span>
-          </div>
-          <h1 className="font-heading text-2xl font-bold text-white">
-            {deptName} Department
-          </h1>
-          <p className="text-primary-100/80 text-sm mt-0.5">
-            Coordinator Dashboard — Student tracking, drive shortlisting, & department analytics.
-          </p>
-        </div>
-
-        <div className="flex items-center space-x-2 bg-primary-700/60 px-4 py-2 rounded-lg border border-primary-500 shrink-0">
-          <Users className="w-4 h-4 text-accent-500" />
-          <span className="text-xs font-semibold text-white">
-            {stats.deptStudents} Registered Students
-          </span>
-        </div>
-      </div>
-
-      {/* 1. Stat Cards Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Dept. Students"
-          value={stats.deptStudents}
-          subtitle={`Enrolled in ${deptName}`}
-          icon={Users}
-          iconColor="text-primary-700"
-          iconBg="bg-primary-100"
-        />
-        <StatCard
-          label="Eligible Drives"
-          value={stats.activeDrives}
-          subtitle="Open for department branch"
-          icon={Briefcase}
-          iconColor="text-accent-500"
-          iconBg="bg-accent-500/10"
-        />
-        <StatCard
-          label="Pending Shortlists"
-          value={stats.pendingShortlists}
-          subtitle="Applications awaiting review"
-          icon={FileCheck}
-          iconColor="text-warning-600"
-          iconBg="bg-warning-100"
-        />
-        <StatCard
-          label="Students Placed"
-          value={stats.placedStudents}
-          delta={stats.placementRateDelta}
-          deltaType="increase"
-          subtitle={`${stats.placementRate}% department placement rate`}
-          icon={Award}
-          iconColor="text-success-600"
-          iconBg="bg-success-100"
-        />
-      </div>
-
-      {/* 2. Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Division Breakdown Bar Chart */}
-        <div className="bg-bg-surface p-5 border border-border-subtle rounded-xl shadow-2xs">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-heading text-sm font-semibold text-text-primary">
-                Division Placement Breakdown
-              </h3>
-              <p className="text-[11px] text-text-muted">Placement percentage by class division</p>
+      {/* Department Hero Header */}
+      <div className="bg-white border-2 border-zinc-800 rounded-2xl p-6 shadow-sm card-pop">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#F5F0E6] border border-zinc-700 text-zinc-900 text-xs font-bold uppercase tracking-wider mb-2">
+              <Building2 className="w-3.5 h-3.5 text-zinc-800" />
+              <span>Department Scoped Workflow</span>
             </div>
-            <span className="text-[10px] font-semibold text-primary-500 bg-primary-100 px-2 py-0.5 rounded uppercase">
-              Class Divisions
-            </span>
+            <h1 className="font-heading text-2xl font-extrabold text-zinc-900">
+              {deptName} Department Dashboard
+            </h1>
+            <p className="text-zinc-600 text-xs mt-1 max-w-xl font-medium">
+              Coordinator Portal — Student directory, division performance, & company drive shortlisting.
+            </p>
           </div>
 
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={divisionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EB" vertical={false} />
-                <XAxis dataKey="division" tick={{ fill: '#5B6B7A', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis domain={[0, 100]} tick={{ fill: '#5B6B7A', fontSize: 11 }} axisLine={false} tickLine={false} unit="%" />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #E2E6EB', fontSize: '12px' }}
-                  formatter={(val) => [`${val}%`, 'Placement Rate']}
-                />
-                <Bar dataKey="rate" fill="#1C3F63" radius={[4, 4, 0, 0]} name="Placement Rate (%)" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Department Growth Trend Line Chart */}
-        <div className="bg-bg-surface p-5 border border-border-subtle rounded-xl shadow-2xs">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-heading text-sm font-semibold text-text-primary">
-                Department Placement Growth
-              </h3>
-              <p className="text-[11px] text-text-muted">Historical department selection trend</p>
-            </div>
-            <span className="text-[10px] font-semibold text-success-600 bg-success-100 px-2 py-0.5 rounded uppercase">
-              Department Trend
-            </span>
-          </div>
-
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E6EB" vertical={false} />
-                <XAxis dataKey="year" tick={{ fill: '#5B6B7A', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#5B6B7A', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #E2E6EB', fontSize: '12px' }}
-                />
-                <Line type="monotone" dataKey="placed" stroke="#1C3F63" strokeWidth={2.5} dot={{ r: 4, fill: '#B8862E' }} name="Department Placed" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Bottom Grid: Department Drives Table + Activity Feed */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-bg-surface border border-border-subtle rounded-xl p-5 shadow-2xs">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-heading text-sm font-semibold text-text-primary">
-                Department Eligible Drives
-              </h3>
-              <p className="text-[11px] text-text-muted">Active placement drives open for {deptName}</p>
-            </div>
-            <Link to="/drives" className="text-xs text-primary-500 font-semibold hover:underline flex items-center space-x-1">
-              <span>View Drives</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <Link
+              to="/students/import"
+              className="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-heading font-bold text-xs rounded-xl shadow-xs inline-flex items-center space-x-2 transition-all border border-zinc-800"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Upload Dept Data</span>
+            </Link>
+            <Link
+              to="/students"
+              className="px-4 py-2.5 bg-[#FAF8F5] hover:bg-[#F5F0E6] border border-zinc-700 text-zinc-900 font-heading font-bold text-xs rounded-xl inline-flex items-center space-x-2 transition-all"
+            >
+              <Users className="w-4 h-4 text-zinc-800" />
+              <span>View Dept Students</span>
             </Link>
           </div>
+        </div>
+      </div>
 
-          {upcomingDrives.length === 0 ? (
-            <EmptyState title="No active drives" description="No active placement drives for your department currently." />
-          ) : (
+      {/* 4 Stat Cards Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-5 bg-white border border-zinc-700 rounded-2xl shadow-sm card-pop">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">Dept. Students</span>
+          <span className="font-heading font-extrabold text-3xl text-zinc-900 block mt-1">{stats.deptStudents}</span>
+          <span className="text-[10px] font-bold text-zinc-500 mt-1 block">Enrolled in {deptName}</span>
+        </div>
+
+        <div className="p-5 bg-white border border-zinc-700 rounded-2xl shadow-sm card-pop">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Active Dept Drives</span>
+          <span className="font-heading font-extrabold text-3xl text-zinc-900 block mt-1">{stats.activeDrives}</span>
+          <span className="text-[10px] font-bold text-zinc-500 mt-1 block">Open for department branch</span>
+        </div>
+
+        <div className="p-5 bg-white border border-zinc-700 rounded-2xl shadow-sm card-pop">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Pending Reviews</span>
+          <span className="font-heading font-extrabold text-3xl text-amber-800 block mt-1">{stats.pendingShortlists}</span>
+          <span className="text-[10px] font-bold text-zinc-500 mt-1 block">Applications awaiting review</span>
+        </div>
+
+        <div className="p-5 bg-white border border-zinc-700 rounded-2xl shadow-sm card-pop">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Students Placed</span>
+          <div className="flex items-baseline space-x-2 mt-1">
+            <span className="font-heading font-extrabold text-3xl text-emerald-700">{stats.placedStudents}</span>
+            <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300">
+              {stats.placementRate}% Rate
+            </span>
+          </div>
+          <span className="text-[10px] font-bold text-zinc-500 mt-1 block">{stats.placementRateDelta}</span>
+        </div>
+      </div>
+
+      {/* Main Layout Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 space-y-6">
+          {/* Division Chart */}
+          <div className="bg-white border-2 border-zinc-800 rounded-2xl p-6 shadow-sm card-pop space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-300">
+              <h3 className="font-heading text-sm font-extrabold text-zinc-900 uppercase tracking-wider">
+                Division Placement Breakdown (%)
+              </h3>
+              <span className="px-3 py-1 rounded-full bg-[#F5F0E6] border border-zinc-700 text-zinc-900 text-[10px] font-bold uppercase">
+                {deptName}
+              </span>
+            </div>
+
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={divisionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#EAE1D2" vertical={false} />
+                  <XAxis dataKey="division" tick={{ fill: '#3F3F46', fontSize: 11, fontWeight: 600 }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fill: '#3F3F46', fontSize: 11, fontWeight: 600 }} axisLine={false} tickLine={false} unit="%" />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#ffffff', borderRadius: '12px', border: '2px solid #27272A', fontSize: '12px', fontWeight: 'bold' }}
+                    formatter={(val) => [`${val}%`, 'Placement Rate']}
+                  />
+                  <Bar dataKey="rate" fill="#18181B" radius={[6, 6, 0, 0]} name="Placement Rate (%)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Dept Drives Table */}
+          <div className="bg-white border-2 border-zinc-800 rounded-2xl p-6 shadow-sm card-pop space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-300">
+              <h3 className="font-heading text-sm font-extrabold text-zinc-900 uppercase tracking-wider">
+                Department Eligible Drives
+              </h3>
+              <Link to="/drives" className="text-xs font-bold text-zinc-900 hover:underline flex items-center space-x-1">
+                <span>View All</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-border-subtle text-text-muted font-semibold uppercase tracking-wider">
-                    <th className="pb-2.5 font-semibold">Company Name</th>
-                    <th className="pb-2.5 font-semibold">Package</th>
-                    <th className="pb-2.5 font-semibold">Deadline</th>
-                    <th className="pb-2.5 font-semibold">Eligible Students</th>
-                    <th className="pb-2.5 font-semibold">Status</th>
+                  <tr className="border-b-2 border-zinc-800 text-zinc-600 font-extrabold uppercase tracking-wider text-[10px] bg-[#FAF8F5]">
+                    <th className="py-3 px-3">Company Name</th>
+                    <th className="py-3 px-3">Package</th>
+                    <th className="py-3 px-3">Deadline</th>
+                    <th className="py-3 px-3">Eligible Students</th>
+                    <th className="py-3 px-3">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border-subtle text-text-primary">
-                  {upcomingDrives.map((drive) => (
-                    <tr key={drive.id} className="hover:bg-bg-base transition-colors">
-                      <td className="py-3 font-semibold text-primary-900">{drive.company}</td>
-                      <td className="py-3 font-mono font-medium text-accent-500">{drive.ctc}</td>
-                      <td className="py-3 text-text-secondary">{drive.deadline}</td>
-                      <td className="py-3 text-text-secondary font-medium">{drive.eligibleCount}</td>
-                      <td className="py-3">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
-                            drive.status === 'Open'
-                              ? 'bg-success-100 text-success-600'
-                              : 'bg-warning-100 text-warning-600'
-                          }`}
-                        >
-                          {drive.status}
+                <tbody className="divide-y divide-zinc-200 font-semibold text-zinc-900">
+                  {upcomingDrives.map((d) => (
+                    <tr key={d.id} className="hover:bg-[#FAF8F5] transition-colors">
+                      <td className="py-3.5 px-3 font-bold text-zinc-900">{d.company}</td>
+                      <td className="py-3.5 px-3 font-mono font-bold text-amber-800">{d.ctc}</td>
+                      <td className="py-3.5 px-3 text-zinc-600 font-medium">{d.deadline}</td>
+                      <td className="py-3.5 px-3 font-bold">{d.eligibleCount} Students</td>
+                      <td className="py-3.5 px-3">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border bg-emerald-100 text-emerald-900 border-emerald-300">
+                          {d.status}
                         </span>
                       </td>
                     </tr>
@@ -259,33 +209,35 @@ export function CoordinatorDashboardView({ data, isLoading, user }) {
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Coordinator Activity Feed */}
-        <div className="bg-bg-surface border border-border-subtle rounded-xl p-5 shadow-2xs">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-heading text-sm font-semibold text-text-primary">
-              Department Logs
-            </h3>
-            <Clock className="w-4 h-4 text-text-muted" />
-          </div>
+        {/* Right Log Feed (4 cols) */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="bg-white border-2 border-zinc-800 rounded-2xl p-6 shadow-sm card-pop space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-300">
+              <h3 className="font-heading text-xs font-extrabold text-zinc-900 uppercase tracking-wider">
+                Department Activity Log
+              </h3>
+              <Clock className="w-4 h-4 text-zinc-500" />
+            </div>
 
-          <div className="space-y-4">
-            {activities.map((act) => {
-              const Icon = act.icon;
-              return (
-                <div key={act.id} className="flex items-start space-x-3 text-xs border-b border-border-subtle/50 pb-3 last:border-0 last:pb-0">
-                  <div className="w-7 h-7 rounded-lg bg-primary-100 text-primary-700 flex items-center justify-center shrink-0 mt-0.5">
-                    <Icon className="w-3.5 h-3.5" />
+            <div className="space-y-3">
+              {activities.map((act) => {
+                const Icon = act.icon;
+                return (
+                  <div key={act.id} className="flex items-start space-x-3 text-xs border-b border-zinc-200 pb-2.5 last:border-0 last:pb-0">
+                    <div className="w-7 h-7 rounded-lg bg-[#F5F0E6] text-zinc-900 flex items-center justify-center shrink-0 mt-0.5 border border-zinc-400">
+                      <Icon className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-zinc-900 font-semibold leading-snug">{act.text}</p>
+                      <span className="text-[10px] text-zinc-500 font-bold mt-0.5 block">{act.time}</span>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-text-primary font-medium leading-tight">{act.text}</p>
-                    <span className="text-[10px] text-text-muted mt-1 block">{act.time}</span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

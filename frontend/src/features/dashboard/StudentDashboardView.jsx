@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { StatCard } from '../../components/ui/StatCard';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import {
@@ -14,18 +13,18 @@ import {
   User,
   CheckCircle2,
   AlertTriangle,
+  GraduationCap,
+  ExternalLink,
 } from 'lucide-react';
 
 export function StudentDashboardView({ data, isLoading, user }) {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-28 w-full rounded-xl" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Skeleton variant="card" />
-          <Skeleton variant="card" />
-          <Skeleton variant="card" />
-          <Skeleton variant="card" />
+        <Skeleton className="h-32 w-full rounded-2xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <Skeleton className="lg:col-span-8 h-96 rounded-2xl" />
+          <Skeleton className="lg:col-span-4 h-96 rounded-2xl" />
         </div>
       </div>
     );
@@ -70,191 +69,191 @@ export function StudentDashboardView({ data, isLoading, user }) {
 
   return (
     <div className="space-y-6">
-      {/* Student Welcome Header Banner */}
-      <div className="bg-primary-900 text-white p-6 rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-primary-700 border border-primary-500 text-accent-500 text-xs font-semibold uppercase tracking-wider mb-2">
-            <span>Student Placement Portal</span>
+      {/* Student Welcome Hero Header */}
+      <div className="bg-white border-2 border-zinc-800 rounded-2xl p-6 shadow-sm card-pop">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#F5F0E6] border border-zinc-700 text-zinc-900 text-xs font-bold uppercase tracking-wider mb-2">
+              <GraduationCap className="w-3.5 h-3.5 text-zinc-800" />
+              <span>Student Self-Service Portal</span>
+            </div>
+            <h1 className="font-heading text-2xl font-extrabold text-zinc-900">
+              Welcome back, {studentName}!
+            </h1>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-600 font-bold mt-1">
+              <span className="font-mono bg-[#FAF8F5] border border-zinc-700 px-2.5 py-0.5 rounded-md text-zinc-900">PRN: {prn}</span>
+              <span>•</span>
+              <span>{branch}</span>
+              <span>•</span>
+              <span className="text-zinc-900">Semester {semester}</span>
+            </div>
           </div>
-          <h1 className="font-heading text-2xl font-bold text-white">
-            Welcome, {studentName}!
-          </h1>
-          <div className="flex flex-wrap items-center gap-3 text-xs text-primary-100/90 mt-1">
-            <span className="font-mono bg-primary-700/80 px-2 py-0.5 rounded text-accent-500">PRN: {prn}</span>
-            <span>•</span>
-            <span>{branch}</span>
-            <span>•</span>
-            <span className="font-semibold text-white">Semester {semester}</span>
+
+          <div className="flex items-center space-x-3 shrink-0">
+            <Link
+              to="/profile"
+              className="px-4 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-heading font-bold text-xs rounded-xl shadow-xs inline-flex items-center space-x-2 transition-all border border-zinc-800"
+            >
+              <User className="w-4 h-4" />
+              <span>My Profile</span>
+            </Link>
+            <Link
+              to="/academics"
+              className="px-4 py-2.5 bg-[#FAF8F5] hover:bg-[#F5F0E6] border border-zinc-700 text-zinc-900 font-heading font-bold text-xs rounded-xl inline-flex items-center space-x-2 transition-all"
+            >
+              <Award className="w-4 h-4 text-amber-700" />
+              <span>Academics</span>
+            </Link>
           </div>
         </div>
-
-        <Link
-          to="/profile"
-          className="inline-flex items-center justify-center space-x-2 px-4 py-2 bg-accent-500 hover:bg-accent-500/90 text-white font-heading font-medium text-xs rounded-lg shadow-sm transition-all"
-        >
-          <User className="w-4 h-4" />
-          <span>View Profile</span>
-        </Link>
       </div>
 
-      {/* Profile Completeness Nudge Banner */}
+      {/* Profile Readiness Nudge Banner */}
       {profileCompleteness < 100 && (
-        <div className="p-4 bg-warning-100/60 border border-warning-600/30 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="p-4 bg-amber-50 border-2 border-amber-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 card-pop">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-warning-600/10 text-warning-600 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-400 text-amber-900 flex items-center justify-center shrink-0">
               <AlertTriangle className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-heading text-xs font-bold text-warning-600 uppercase tracking-wider">
-                Profile Completeness: {profileCompleteness}%
+              <h4 className="font-heading text-xs font-extrabold text-amber-900 uppercase tracking-wider">
+                Profile Readiness Status: {profileCompleteness}%
               </h4>
-              <p className="text-text-secondary text-xs mt-0.5">
-                Complete your technical skills and resume link to increase drive eligibility visibility.
+              <p className="text-amber-800 text-xs font-semibold mt-0.5">
+                Complete your skills tag list and resume PDF link to increase drive recruiter eligibility.
               </p>
             </div>
           </div>
           <Link
             to="/profile"
-            className="px-3.5 py-1.5 bg-warning-600 text-white font-heading font-semibold text-xs rounded-lg hover:bg-warning-600/90 text-center shrink-0 transition-colors"
+            className="px-4 py-2 bg-amber-900 hover:bg-amber-800 text-white font-heading font-bold text-xs rounded-xl text-center shrink-0 transition-colors"
           >
-            Update Profile
+            Complete Profile
           </Link>
         </div>
       )}
 
-      {/* 1. Stat Cards Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Cumulative CGPA"
-          value={stats.cgpa}
-          subtitle="Credit-weighted aggregate"
-          icon={Award}
-          iconColor="text-accent-500"
-          iconBg="bg-accent-500/10"
-        />
-        <StatCard
-          label="Active Backlogs"
-          value={stats.activeBacklogs}
-          subtitle={stats.activeBacklogs === 0 ? 'No uncleared backlogs' : 'Uncleared backlog subjects'}
-          icon={AlertCircle}
-          iconColor={stats.activeBacklogs === 0 ? 'text-success-600' : 'text-error-600'}
-          iconBg={stats.activeBacklogs === 0 ? 'bg-success-100' : 'bg-error-100'}
-        />
-        <StatCard
-          label="Applications in Progress"
-          value={stats.applicationsCount}
-          subtitle="Active drive submissions"
-          icon={FileCheck}
-          iconColor="text-primary-700"
-          iconBg="bg-primary-100"
-        />
-        <StatCard
-          label="Eligible Drives"
-          value={stats.eligibleDrivesCount}
-          subtitle="Matching your CGPA & branch"
-          icon={Briefcase}
-          iconColor="text-info-600"
-          iconBg="bg-info-100"
-        />
-      </div>
-
-      {/* 2. Top 3 Previews Grid: Eligible Drives, Notifications, Events */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Top 3 Eligible Drives Preview */}
-        <div className="bg-bg-surface border border-border-subtle rounded-xl p-5 shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-heading text-sm font-semibold text-text-primary">
-                  Eligible Drives Preview
-                </h3>
-                <p className="text-[11px] text-text-muted">Top drives open for your criteria</p>
-              </div>
-              <Link to="/drives" className="text-xs text-primary-500 font-semibold hover:underline flex items-center space-x-1">
-                <span>View All</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            {eligibleDrives.length === 0 ? (
-              <EmptyState title="No eligible drives" description="No active drives currently match your criteria." />
-            ) : (
-              <div className="space-y-3">
-                {eligibleDrives.map((d) => (
-                  <div key={d.id} className="p-3 bg-bg-base border border-border-subtle rounded-lg hover:border-primary-500 transition-all">
-                    <div className="flex items-center justify-between">
-                      <span className="font-heading text-xs font-bold text-primary-900">{d.company}</span>
-                      <span className="text-xs font-mono font-semibold text-accent-500">{d.ctc}</span>
-                    </div>
-                    <p className="text-[11px] text-text-secondary mt-0.5">{d.role}</p>
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-border-subtle/60 text-[10px] text-text-muted">
-                      <span>Min CGPA: {d.minCgpa}</span>
-                      <span>Deadline: {d.deadline}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      {/* 3 Stat Cards Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="p-5 bg-white border border-zinc-700 rounded-2xl shadow-sm card-pop">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">Cumulative CGPA</span>
+          <span className="font-heading font-extrabold text-3xl text-amber-800 block mt-1">{stats.cgpa}</span>
+          <span className="text-[10px] font-bold text-zinc-500 mt-1 block">Credit-weighted aggregate</span>
         </div>
 
-        {/* Top 3 Notifications Preview */}
-        <div className="bg-bg-surface border border-border-subtle rounded-xl p-5 shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
+        <div className="p-5 bg-white border border-zinc-700 rounded-2xl shadow-sm card-pop">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">Active Backlogs</span>
+          <span className={`font-heading font-extrabold text-3xl block mt-1 ${stats.activeBacklogs === 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+            {stats.activeBacklogs} Backlogs
+          </span>
+          <span className="text-[10px] font-bold text-zinc-500 mt-1 block">Verified university record</span>
+        </div>
+
+        <div className="p-5 bg-white border border-zinc-700 rounded-2xl shadow-sm card-pop">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block">Eligible Drives</span>
+          <span className="font-heading font-extrabold text-3xl text-zinc-900 block mt-1">{stats.eligibleDrivesCount} Drives</span>
+          <span className="text-[10px] font-bold text-zinc-500 mt-1 block">Matching your criteria</span>
+        </div>
+      </div>
+
+      {/* Main Content Grid: Drives Left (8 cols) + Alerts Right (4 cols) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 space-y-6">
+          {/* Top Eligible Drives */}
+          <div className="bg-white border-2 border-zinc-800 rounded-2xl p-6 shadow-sm card-pop space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-300">
               <div>
-                <h3 className="font-heading text-sm font-semibold text-text-primary">
-                  Recent Notifications
+                <h3 className="font-heading text-sm font-extrabold text-zinc-900 uppercase tracking-wider">
+                  Top Eligible Placement Drives
                 </h3>
-                <p className="text-[11px] text-text-muted">Direct announcements & interview calls</p>
+                <p className="text-zinc-600 text-xs mt-0.5 font-medium">Campus recruiting drives matching your CGPA and branch</p>
               </div>
-              <Link to="/notifications" className="text-xs text-primary-500 font-semibold hover:underline flex items-center space-x-1">
-                <span>View All</span>
+              <Link
+                to="/drives"
+                className="text-xs font-bold text-zinc-900 hover:underline inline-flex items-center space-x-1"
+              >
+                <span>View All Drives</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
             <div className="space-y-3">
-              {notifications.map((n) => (
-                <div key={n.id} className="p-3 bg-bg-base border border-border-subtle rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Bell className="w-3.5 h-3.5 text-accent-500 shrink-0" />
-                    <span className="font-heading text-xs font-bold text-text-primary">{n.title}</span>
+              {eligibleDrives.map((d) => (
+                <div key={d.id} className="p-4 bg-[#FAF8F5] border border-zinc-700 rounded-xl hover:border-zinc-900 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-heading text-sm font-extrabold text-zinc-900">{d.company}</span>
+                      <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-full text-[10px] font-bold">
+                        Eligible
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-700 font-bold mt-0.5">{d.role} • Min CGPA: {d.minCgpa}</p>
+                    <span className="text-[10px] text-zinc-500 font-semibold block mt-1">Application Deadline: {d.deadline}</span>
                   </div>
-                  <p className="text-[11px] text-text-secondary mt-1 leading-snug">{n.text}</p>
-                  <span className="text-[10px] text-text-muted mt-1.5 block">{n.time}</span>
+
+                  <div className="flex items-center space-x-3 shrink-0">
+                    <span className="font-mono font-extrabold text-amber-900 text-sm">{d.ctc}</span>
+                    <Link
+                      to={`/drives/${d.id}`}
+                      className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs rounded-xl transition-colors border border-zinc-800"
+                    >
+                      View & Apply
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Top 3 Upcoming Events Preview */}
-        <div className="bg-bg-surface border border-border-subtle rounded-xl p-5 shadow-2xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-heading text-sm font-semibold text-text-primary">
-                  Upcoming Events
-                </h3>
-                <p className="text-[11px] text-text-muted">Training sessions & workshops</p>
-              </div>
-              <Link to="/events" className="text-xs text-primary-500 font-semibold hover:underline flex items-center space-x-1">
-                <span>View All</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+        {/* Right Column: Direct Alerts & Events (4 cols) */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Notifications Feed */}
+          <div className="bg-white border-2 border-zinc-800 rounded-2xl p-6 shadow-sm card-pop space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-300">
+              <h3 className="font-heading text-xs font-extrabold text-zinc-900 uppercase tracking-wider">
+                Direct Alerts & Notices
+              </h3>
+              <Link to="/notifications" className="text-[11px] font-bold text-zinc-900 hover:underline">
+                View All
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              {notifications.map((n) => (
+                <div key={n.id} className="p-3 bg-[#FAF8F5] border border-zinc-700 rounded-xl">
+                  <div className="flex items-center space-x-2">
+                    <Bell className="w-3.5 h-3.5 text-amber-800 shrink-0" />
+                    <span className="font-heading text-xs font-bold text-zinc-900">{n.title}</span>
+                  </div>
+                  <p className="text-[11px] text-zinc-700 mt-1 leading-relaxed font-medium">{n.text}</p>
+                  <span className="text-[10px] text-zinc-500 font-bold mt-1.5 block">{n.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Training Events */}
+          <div className="bg-white border-2 border-zinc-800 rounded-2xl p-6 shadow-sm card-pop space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-300">
+              <h3 className="font-heading text-xs font-extrabold text-zinc-900 uppercase tracking-wider">
+                Training Workshops
+              </h3>
+              <Link to="/events" className="text-[11px] font-bold text-zinc-900 hover:underline">
+                Calendar
               </Link>
             </div>
 
             <div className="space-y-3">
               {events.map((e) => (
-                <div key={e.id} className="p-3 bg-bg-base border border-border-subtle rounded-lg">
+                <div key={e.id} className="p-3 bg-[#FAF8F5] border border-zinc-700 rounded-xl">
                   <div className="flex items-center space-x-2">
-                    <Calendar className="w-3.5 h-3.5 text-primary-700 shrink-0" />
-                    <span className="font-heading text-xs font-bold text-text-primary">{e.title}</span>
+                    <Calendar className="w-3.5 h-3.5 text-zinc-900 shrink-0" />
+                    <span className="font-heading text-xs font-bold text-zinc-900">{e.title}</span>
                   </div>
-                  <div className="flex items-center justify-between mt-2 text-[10px] text-text-muted font-medium">
+                  <div className="flex items-center justify-between mt-2 text-[10px] text-zinc-600 font-bold">
                     <span>{e.date} • {e.time}</span>
-                    <span className="text-primary-700">{e.location}</span>
+                    <span className="text-zinc-900">{e.location}</span>
                   </div>
                 </div>
               ))}

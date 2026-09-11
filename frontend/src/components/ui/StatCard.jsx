@@ -12,7 +12,7 @@ export function StatCard({
   iconBg = 'bg-primary-100/60',
 }) {
   return (
-    <div className="p-5 bg-bg-surface border border-border-subtle rounded-xl shadow-2xs hover:shadow-xs transition-shadow">
+    <div className="p-5 bg-white border border-slate-300 rounded-2xl shadow-sm card-pop">
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
           {label}
