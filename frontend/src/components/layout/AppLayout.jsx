@@ -156,12 +156,12 @@ export function AppLayout() {
   const roleBadge = getRoleBadge(normalizedRole);
 
   return (
-    <div className="min-h-screen flex bg-bg-base text-text-primary antialiased">
-      {/* Sidebar Desktop/Tablet Collapsible */}
+    <div className="h-screen w-full flex overflow-hidden bg-bg-base text-text-primary antialiased">
+      {/* Sidebar Desktop/Tablet Collapsible - Fixed Position */}
       <aside
         className={`hidden lg:flex ${
           collapsed ? 'w-16' : 'w-64'
-        } bg-primary-900 text-white flex-col shrink-0 border-r border-primary-700 select-none transition-all duration-300`}
+        } h-screen bg-primary-900 text-white flex-col shrink-0 border-r border-primary-700 select-none transition-all duration-300 z-30`}
       >
         {/* Brand Header */}
         <div className="h-16 px-4 flex items-center justify-between border-b border-primary-700 bg-primary-900">
@@ -279,9 +279,9 @@ export function AppLayout() {
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden min-w-0">
         {/* Topbar */}
-        <header className="h-16 bg-bg-surface border-b border-border-subtle px-4 lg:px-8 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
+        <header className="h-16 shrink-0 bg-bg-surface border-b border-border-subtle px-4 lg:px-8 flex items-center justify-between z-30 shadow-2xs">
           <div className="flex items-center space-x-3">
             <button
               type="button"
