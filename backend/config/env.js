@@ -6,13 +6,13 @@ const env = {
   isProduction: process.env.NODE_ENV === 'production',
   isTest: process.env.NODE_ENV === 'test',
 
-  // Database
+  // Database (Railway Online MySQL / Custom MySQL)
   db: {
-    host: process.env.DB_HOST || process.env.MYSQLHOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || process.env.MYSQLPORT || '3306', 10),
-    name: process.env.DB_NAME || process.env.MYSQLDATABASE || 'placetrack_db',
-    user: process.env.DB_USER || process.env.MYSQLUSER || 'root',
-    password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || '',
+    host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.MYSQLPORT || process.env.DB_PORT || '3306', 10),
+    name: process.env.MYSQLDATABASE || process.env.DB_NAME || 'railway',
+    user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+    password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
     dialect: process.env.DB_DIALECT || 'mysql',
     url: process.env.MYSQL_URL || process.env.DATABASE_URL || null
   },
