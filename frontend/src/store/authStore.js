@@ -1,4 +1,10 @@
-// Simple, single-source-of-truth auth store backed by localStorage and memory
+import { useState, useEffect } from 'react';
+
+// Single-source-of-truth auth store
+// NOTE ON AUTH STORAGE:
+// Raw JWT token is persisted in localStorage here for client SPA authorization headers.
+// If the backend API contract is upgraded to issue httpOnly cookies, raw storage in localStorage
+// should be replaced with cookie handling and auth store will maintain in-memory user state only.
 
 const TOKEN_KEY = 'placetrack_jwt_token';
 const USER_KEY = 'placetrack_user';
@@ -24,7 +30,19 @@ const notify = () => {
 export const authStore = {
   getToken: () => memoryToken,
   getUser: () => memoryUser,
+  getRole: () => {
+    const r = memoryUser?.role?.toLowerCase();
+    if (r === 'officer') return 'tpo';
+    return r || null;
+  },
+  isAuthenticated: () => Boolean(memoryToken && memoryUser),
   setAuth: (token, user) => {
+    // Normalize role string ('officer' -> 'tpo')
+    if (user && user.role) {
+      if (user.role.toLowerCase() === 'officer') {
+        user.role = 'tpo';
+      }
+    }
     memoryToken = token;
     memoryUser = user;
     if (token) {
@@ -51,3 +69,26 @@ export const authStore = {
     return () => listeners.delete(listener);
   }
 };
+
+export function useAuth() {
+  const [auth, setAuth] = useState({
+    token: authStore.getToken(),
+    user: authStore.getUser(),
+    role: authStore.getRole(),
+    isAuthenticated: authStore.isAuthenticated()
+  });
+
+  useEffect(() => {
+    const unsubscribe = authStore.subscribe(({ token, user }) => {
+      setAuth({
+        token,
+        user,
+        role: authStore.getRole(),
+        isAuthenticated: Boolean(token && user)
+      });
+    });
+    return unsubscribe;
+  }, []);
+
+  return auth;
+}
