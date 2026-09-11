@@ -23,12 +23,27 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+const sequelize = require('./config/database');
+
 const PORT = process.env.PORT || 5000;
 
+const startServer = async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Database connected successfully.');
+  } catch (error) {
+    console.error('Unable to connect to the database:', error.message);
+  }
+
+  if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  }
+};
+
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+  startServer();
 }
 
-module.exports = app;
+module.exports = { app, startServer };
