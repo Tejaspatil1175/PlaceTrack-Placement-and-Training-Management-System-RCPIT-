@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { loginApi } from '../api/auth';
 import { authStore } from '../store/authStore';
 import { DEMO_CREDENTIALS } from '../config/demoCredentials';
-import { Lock, Mail, ChevronDown, ChevronUp, CheckCircle, ShieldAlert, Sparkles, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, ChevronDown, ChevronUp, CheckCircle, ShieldAlert, Sparkles, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 const loginSchema = z.object({
   identifier: z.string().min(1, 'Please enter your PRN or Email address'),
@@ -19,6 +19,7 @@ export function LoginPage() {
   const [serverError, setServerError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDemoPanel, setShowDemoPanel] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -203,7 +204,7 @@ export function LoginPage() {
                 )}
               </div>
 
-              {/* Password Field */}
+              {/* Password Field with Eye Symbol Toggle */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-[10px] font-extrabold text-zinc-900 uppercase tracking-wider">
@@ -225,13 +226,25 @@ export function LoginPage() {
                     <Lock className="w-3.5 h-3.5" />
                   </div>
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     {...register('password')}
-                    className={`w-full pl-8 pr-3 py-1.5 bg-white border ${
+                    className={`w-full pl-8 pr-9 py-1.5 bg-white border ${
                       errors.password ? 'border-rose-600' : 'border-zinc-700 focus:ring-zinc-800'
                     } rounded-lg text-xs text-zinc-900 placeholder:text-zinc-400 font-bold focus:outline-none focus:ring-2`}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-zinc-500 hover:text-zinc-900 transition-colors focus:outline-none"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-3.5 h-3.5 text-zinc-700" />
+                    ) : (
+                      <Eye className="w-3.5 h-3.5 text-zinc-500" />
+                    )}
+                  </button>
                 </div>
                 {errors.password && (
                   <p className="text-[10px] text-rose-700 mt-0.5 font-bold">
