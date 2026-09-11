@@ -58,6 +58,45 @@ function computeCgpa(semesterRecords = []) {
   return Math.min(10.00, Math.max(0.00, parseFloat(simpleAverage.toFixed(2))));
 }
 
+/**
+ * Computes the stateful running count of active uncleared backlogs.
+ * Running sum of (newBacklogs - clearedBacklogs) across semesters, floored at 0.
+ *
+ * @param {Array<Object>} semesterRecords - Array of semester records
+ * @returns {number} - Active backlog count (integer >= 0)
+ */
+function computeActiveBacklogs(semesterRecords = []) {
+  if (!Array.isArray(semesterRecords) || semesterRecords.length === 0) {
+    return 0;
+  }
+
+  // Sort by semester number ascending to ensure chronological evaluation
+  const sortedRecords = [...semesterRecords].sort((a, b) => {
+    const semA = a.semesterNumber || 0;
+    const semB = b.semesterNumber || 0;
+    return semA - semB;
+  });
+
+  let runningBacklogs = 0;
+
+  for (const record of sortedRecords) {
+    if (!record) continue;
+
+    const newBacklogs = record.newBacklogs !== null && record.newBacklogs !== undefined && !isNaN(parseInt(record.newBacklogs, 10))
+      ? Math.max(0, parseInt(record.newBacklogs, 10))
+      : 0;
+
+    const clearedBacklogs = record.clearedBacklogs !== null && record.clearedBacklogs !== undefined && !isNaN(parseInt(record.clearedBacklogs, 10))
+      ? Math.max(0, parseInt(record.clearedBacklogs, 10))
+      : 0;
+
+    runningBacklogs = Math.max(0, runningBacklogs + newBacklogs - clearedBacklogs);
+  }
+
+  return runningBacklogs;
+}
+
 module.exports = {
-  computeCgpa
+  computeCgpa,
+  computeActiveBacklogs
 };
