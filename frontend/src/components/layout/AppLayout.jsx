@@ -21,6 +21,8 @@ import {
   X,
   ChevronDown,
   ShieldCheck,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -110,13 +112,24 @@ const NAV_ITEMS = [
   },
 ];
 
+// Student Mobile Bottom Nav Items
+const STUDENT_MOBILE_NAV = [
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/drives', label: 'Drives', icon: Briefcase },
+  { path: '/applications', label: 'Applications', icon: FileCheck },
+  { path: '/notifications', label: 'Alerts', icon: Bell },
+  { path: '/profile', label: 'Profile', icon: User },
+];
+
 export function AppLayout() {
   const { user, role } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const normalizedRole = role === 'officer' ? 'tpo' : role || 'student';
+  const isStudent = normalizedRole === 'student';
 
   const visibleNavItems = NAV_ITEMS.filter((item) =>
     item.roles.includes(normalizedRole)
@@ -144,36 +157,55 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen flex bg-bg-base text-text-primary antialiased">
-      {/* Sidebar Desktop */}
-      <aside className="hidden lg:flex w-64 bg-primary-900 text-white flex-col shrink-0 border-r border-primary-700 select-none">
+      {/* Sidebar Desktop/Tablet Collapsible */}
+      <aside
+        className={`hidden lg:flex ${
+          collapsed ? 'w-16' : 'w-64'
+        } bg-primary-900 text-white flex-col shrink-0 border-r border-primary-700 select-none transition-all duration-300`}
+      >
         {/* Brand Header */}
-        <div className="h-16 px-6 flex items-center space-x-3 border-b border-primary-700 bg-primary-900">
-          <div className="w-9 h-9 rounded-lg bg-accent-500 flex items-center justify-center font-heading font-bold text-white text-lg shadow-sm">
-            PT
+        <div className="h-16 px-4 flex items-center justify-between border-b border-primary-700 bg-primary-900">
+          <div className="flex items-center space-x-3 overflow-hidden">
+            <div className="w-9 h-9 rounded-lg bg-accent-500 flex items-center justify-center font-heading font-bold text-white text-lg shadow-sm shrink-0">
+              PT
+            </div>
+            {!collapsed && (
+              <div className="truncate">
+                <span className="font-heading font-bold text-lg text-white block tracking-tight">
+                  PlaceTrack
+                </span>
+                <span className="text-[10px] text-primary-100/70 uppercase tracking-wider font-semibold block">
+                  RCPIT Shirpur
+                </span>
+              </div>
+            )}
           </div>
-          <div>
-            <span className="font-heading font-bold text-lg text-white block tracking-tight">
-              PlaceTrack
-            </span>
-            <span className="text-[10px] text-primary-100/70 uppercase tracking-wider font-semibold block">
-              RCPIT Shirpur
-            </span>
-          </div>
+          <button
+            type="button"
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="p-1.5 rounded-lg text-primary-100/70 hover:text-white hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            {collapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+          </button>
         </div>
 
         {/* Navigation Section */}
         <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-primary-100/50">
-            Main Menu
-          </div>
+          {!collapsed && (
+            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-primary-100/50">
+              Main Menu
+            </div>
+          )}
           {visibleNavItems.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
+                title={collapsed ? item.label : undefined}
                 className={({ isActive }) =>
-                  `flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  `flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                     isActive
                       ? 'bg-primary-700 text-white shadow-xs font-semibold'
                       : 'text-primary-100/80 hover:bg-primary-700/50 hover:text-white'
@@ -181,20 +213,22 @@ export function AppLayout() {
                 }
               >
                 <Icon className="w-4 h-4 shrink-0" />
-                <span>{item.label}</span>
+                {!collapsed && <span className="truncate">{item.label}</span>}
               </NavLink>
             );
           })}
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-primary-700 text-xs text-primary-100/60 flex items-center justify-between">
-          <span>Role: <strong className="text-white capitalize">{normalizedRole}</strong></span>
-          <span className="text-[10px] bg-primary-700 px-2 py-0.5 rounded text-accent-500 font-mono">v1.0</span>
-        </div>
+        {!collapsed && (
+          <div className="p-4 border-t border-primary-700 text-xs text-primary-100/60 flex items-center justify-between">
+            <span>Role: <strong className="text-white capitalize">{normalizedRole}</strong></span>
+            <span className="text-[10px] bg-primary-700 px-2 py-0.5 rounded text-accent-500 font-mono">v1.0</span>
+          </div>
+        )}
       </aside>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer (All Roles) */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
@@ -210,8 +244,10 @@ export function AppLayout() {
                 <span className="font-heading font-bold text-white text-base">PlaceTrack</span>
               </div>
               <button
+                type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1 rounded-md text-primary-100 hover:text-white"
+                aria-label="Close navigation menu"
+                className="p-1 rounded-md text-primary-100 hover:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -225,7 +261,7 @@ export function AppLayout() {
                     to={item.path}
                     onClick={() => setMobileMenuOpen(false)}
                     className={({ isActive }) =>
-                      `flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      `flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                         isActive
                           ? 'bg-primary-700 text-white font-semibold'
                           : 'text-primary-100/80 hover:bg-primary-700/50 hover:text-white'
@@ -248,8 +284,10 @@ export function AppLayout() {
         <header className="h-16 bg-bg-surface border-b border-border-subtle px-4 lg:px-8 flex items-center justify-between sticky top-0 z-30 shadow-2xs">
           <div className="flex items-center space-x-3">
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-text-secondary hover:bg-bg-base"
+              aria-label="Open mobile menu"
+              className="lg:hidden p-2 rounded-lg text-text-secondary hover:bg-bg-base focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -262,8 +300,10 @@ export function AppLayout() {
           {/* User Profile Menu */}
           <div className="relative">
             <button
+              type="button"
               onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-              className="flex items-center space-x-3 p-1.5 rounded-lg hover:bg-bg-base transition-colors focus:outline-none"
+              aria-label="User account menu"
+              className="flex items-center space-x-3 p-1.5 rounded-lg hover:bg-bg-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <div className="w-8 h-8 rounded-full bg-primary-700 text-white font-heading font-semibold text-xs flex items-center justify-center shadow-xs">
                 {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
@@ -300,7 +340,7 @@ export function AppLayout() {
                   <NavLink
                     to="/profile"
                     onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center space-x-2 px-4 py-2 text-xs text-text-primary hover:bg-bg-base"
+                    className="flex items-center space-x-2 px-4 py-2 text-xs text-text-primary hover:bg-bg-base focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
                     <User className="w-3.5 h-3.5" />
                     <span>My Profile</span>
@@ -310,7 +350,7 @@ export function AppLayout() {
                 <NavLink
                   to="/settings"
                   onClick={() => setUserDropdownOpen(false)}
-                  className="flex items-center space-x-2 px-4 py-2 text-xs text-text-primary hover:bg-bg-base"
+                  className="flex items-center space-x-2 px-4 py-2 text-xs text-text-primary hover:bg-bg-base focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <Settings className="w-3.5 h-3.5" />
                   <span>Account Settings</span>
@@ -319,8 +359,9 @@ export function AppLayout() {
                 <div className="border-t border-border-subtle my-1"></div>
 
                 <button
+                  type="button"
                   onClick={handleLogout}
-                  className="w-full flex items-center space-x-2 px-4 py-2 text-xs text-error-600 hover:bg-error-100/50 font-medium transition-colors"
+                  className="w-full flex items-center space-x-2 px-4 py-2 text-xs text-error-600 hover:bg-error-100/50 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sign Out</span>
@@ -331,9 +372,32 @@ export function AppLayout() {
         </header>
 
         {/* Page Content Outlet */}
-        <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
+        <main className={`flex-1 p-4 lg:p-8 overflow-y-auto ${isStudent ? 'pb-20 md:pb-8' : ''}`}>
           <Outlet />
         </main>
+
+        {/* Student-Specific Mobile Bottom Navigation (< 768px) */}
+        {isStudent && (
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-bg-surface border-t border-border-subtle z-40 flex items-center justify-around px-2 shadow-lg">
+            {STUDENT_MOBILE_NAV.map((nav) => {
+              const Icon = nav.icon;
+              return (
+                <NavLink
+                  key={nav.path}
+                  to={nav.path}
+                  className={({ isActive }) =>
+                    `flex flex-col items-center justify-center space-y-1 py-1 px-3 rounded-lg text-[10px] font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                      isActive ? 'text-primary-900 bg-primary-100/50 font-bold' : 'text-text-muted hover:text-primary-700'
+                    }`
+                  }
+                >
+                  <Icon className="w-5 h-5" />
+                  <span>{nav.label}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+        )}
       </div>
     </div>
   );
