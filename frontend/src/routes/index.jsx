@@ -6,7 +6,9 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { LoginPage } from '../pages/LoginPage';
 import { ForbiddenPage } from '../pages/ForbiddenPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
-import { DashboardPage } from '../pages/DashboardPage';
+
+// Import unified role-branching DashboardPage from features/dashboard
+import { DashboardPage } from '../features/dashboard/DashboardPage';
 
 import {
   DepartmentsPage,
@@ -51,7 +53,7 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        {/* /dashboard — officer, coordinator, student */}
+        {/* /dashboard — officer, coordinator, student (Single component branching by role) */}
         <Route path="/dashboard" element={<DashboardPage />} />
 
         {/* /departments — officer only */}
