@@ -96,7 +96,54 @@ function computeActiveBacklogs(semesterRecords = []) {
   return runningBacklogs;
 }
 
+/**
+ * Recomputes CGPA and active backlogs from all SemesterRecords for a student
+ * and updates the cached fields on StudentProfile.
+ *
+ * @param {number} studentId - Primary key of StudentProfile
+ * @param {Object} [options] - Optional Sequelize options (e.g. { transaction })
+ * @returns {Promise<Object>} - Updated academic values { cgpa, activeBacklogs, studentProfile }
+ */
+async function recalculateStudentAcademics(studentId, options = {}) {
+  const { StudentProfile, SemesterRecord } = require('../models');
+
+  const studentProfile = await StudentProfile.findByPk(studentId, {
+    transaction: options.transaction
+  });
+
+  if (!studentProfile) {
+    throw new Error(`StudentProfile with id ${studentId} not found`);
+  }
+
+  const semesterRecords = await SemesterRecord.findAll({
+    where: { studentId },
+    order: [['semesterNumber', 'ASC']],
+    transaction: options.transaction
+  });
+
+  const cgpa = computeCgpa(semesterRecords);
+  const activeBacklogs = computeActiveBacklogs(semesterRecords);
+
+  await studentProfile.update(
+    {
+      cgpa,
+      activeBacklogs
+    },
+    {
+      transaction: options.transaction
+    }
+  );
+
+  return {
+    studentId,
+    cgpa,
+    activeBacklogs,
+    studentProfile
+  };
+}
+
 module.exports = {
   computeCgpa,
-  computeActiveBacklogs
+  computeActiveBacklogs,
+  recalculateStudentAcademics
 };
