@@ -7,20 +7,21 @@ import { LoginPage } from '../pages/LoginPage';
 import { ForbiddenPage } from '../pages/ForbiddenPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 
-// Import unified role-branching DashboardPage from features/dashboard
+// Features
 import { DashboardPage } from '../features/dashboard/DashboardPage';
+import { StudentsListPage } from '../features/students/StudentsListPage';
+import { StudentDetailPage } from '../features/students/StudentDetailPage';
+import { StudentImportPage } from '../features/students/StudentImportPage';
+
+import { DrivesListPage } from '../features/drives/DrivesListPage';
+import { DriveCreatePage } from '../features/drives/DriveCreatePage';
+import { DriveDetailPage } from '../features/drives/DriveDetailPage';
+import { DriveEligibleStudentsPage } from '../features/drives/DriveEligibleStudentsPage';
 
 import {
   DepartmentsPage,
   CoordinatorsPage,
   CoordinatorCreatePage,
-  StudentsListPage,
-  StudentDetailPage,
-  StudentImportPage,
-  DrivesListPage,
-  DriveCreatePage,
-  DriveDetailPage,
-  DriveEligibleStudentsPage,
   ApplicationsPage,
   ApplicationDetailPage,
   NotificationsPage,
@@ -53,7 +54,7 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        {/* /dashboard — officer, coordinator, student (Single component branching by role) */}
+        {/* /dashboard — officer, coordinator, student */}
         <Route path="/dashboard" element={<DashboardPage />} />
 
         {/* /departments — officer only */}
@@ -110,7 +111,7 @@ export function AppRoutes() {
           }
         />
 
-        {/* /drives — officer, coordinator, student */}
+        {/* /drives — officer, coordinator, student (Single shared feature) */}
         <Route path="/drives" element={<DrivesListPage />} />
         <Route
           path="/drives/new"
