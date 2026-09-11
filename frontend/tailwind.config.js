@@ -8,13 +8,13 @@ export default {
     extend: {
       colors: {
         primary: {
-          900: '#0F2A47',
-          700: '#1C3F63',
-          500: '#2D5A82',
-          100: '#E4EBF2',
+          900: '#18181B', // Dark Charcoal / Dark Grey (Completely removes old dark blue #0F2A47)
+          700: '#27272A', // Dark Slate / Dark Grey (#1C3F63 replacement)
+          500: '#3F3F46', // Dark Grey border/focus token (#2D5A82 replacement)
+          100: '#F5F0E6', // Warm Beige background token (#E4EBF2 replacement)
         },
         accent: {
-          500: '#B8862E',
+          500: '#8C7A6B', // Warm Sand / Beige Accent
         },
         beige: {
           50: '#FAF8F5',
@@ -33,11 +33,11 @@ export default {
           800: '#27272A',
           900: '#18181B',
         },
-        'bg-base': '#F5F0E6',
-        'bg-surface': '#FFFFFF',
+        'bg-base': '#F5F0E6', // Warm Beige shell
+        'bg-surface': '#FFFFFF', // Full White surface
         'border-subtle': '#3F3F46', // Dark Grey thin border
-        'border-dark': '#27272A',
-        'text-primary': '#18181B',
+        'border-dark': '#18181B', // Dark Grey solid border
+        'text-primary': '#18181B', // High contrast dark charcoal text
         'text-secondary': '#52525B',
         'text-muted': '#71717A',
         success: {
@@ -59,7 +59,7 @@ export default {
       },
       boxShadow: {
         'pop': '0 10px 25px -5px rgba(24, 24, 27, 0.08), 0 8px 10px -6px rgba(24, 24, 27, 0.04)',
-        'pop-hover': '0 20px 30px -10px rgba(24, 24, 27, 0.12), 0 10px 15px -5px rgba(24, 24, 27, 0.06)',
+        'pop-hover': '0 20px 30px -10px rgba(24, 24, 27, 0.16), 0 10px 15px -5px rgba(24, 24, 27, 0.10)',
       },
       fontFamily: {
         heading: ['Sora', 'Lexend', 'sans-serif'],

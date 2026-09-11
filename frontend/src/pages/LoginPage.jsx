@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { loginApi } from '../api/auth';
 import { authStore } from '../store/authStore';
 import { DEMO_CREDENTIALS } from '../config/demoCredentials';
-import { Lock, Mail, ChevronDown, ChevronUp, CheckCircle, ShieldAlert } from 'lucide-react';
+import { Lock, Mail, ChevronDown, ChevronUp, CheckCircle, ShieldAlert, Sparkles, ShieldCheck } from 'lucide-react';
 
 const loginSchema = z.object({
   identifier: z.string().min(1, 'Please enter your PRN or Email address'),
@@ -91,230 +91,199 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-bg-base overflow-hidden">
-      {/* Left 55% Brand Panel */}
-      <div className="hidden lg:flex lg:w-[55%] bg-primary-900 text-white flex-col justify-between p-12 relative overflow-hidden">
-        {/* Subtle abstract geometric lines background */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <svg className="w-full h-full" viewBox="0 0 800 800" fill="none">
-            <circle cx="400" cy="400" r="300" stroke="#FFFFFF" strokeWidth="1.5" strokeDasharray="6 6" />
-            <circle cx="400" cy="400" r="200" stroke="#FFFFFF" strokeWidth="1" />
-            <path d="M100 200 L700 600 M100 600 L700 200" stroke="#FFFFFF" strokeWidth="1" />
-            <rect x="250" y="250" width="300" height="300" stroke="#FFFFFF" strokeWidth="1.5" transform="rotate(45 400 400)" />
-          </svg>
-        </div>
-
-        {/* Top Header */}
-        <div className="relative z-10 flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-lg bg-accent-500 flex items-center justify-center font-heading font-bold text-white text-xl shadow-lg">
-            PT
-          </div>
-          <div>
-            <span className="font-heading font-bold text-xl tracking-tight text-white block">
-              PlaceTrack
-            </span>
-            <span className="text-xs text-primary-100/70 font-medium">
-              R.C. Patel Institute of Technology, Shirpur
-            </span>
-          </div>
-        </div>
-
-        {/* Middle Value Proposition */}
-        <div className="relative z-10 my-auto max-w-lg">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-primary-700/80 border border-primary-500 text-accent-500 text-xs font-semibold uppercase tracking-wider mb-6">
-            <span>Unified Placement Automation</span>
-          </div>
-          <h1 className="font-heading text-4xl font-bold leading-tight text-white mb-4">
-            Placement & Training Management System
-          </h1>
-          <p className="text-primary-100/90 text-base leading-relaxed mb-8">
-            Digitizing campus recruitment across T&P Officers, Department Coordinators, and Students. Automated eligibility checks, real-time application tracking, and institutional analytics.
-          </p>
-
-          <div className="space-y-3 pt-2">
-            {[
-              'Credit-weighted CGPA & stateful backlog calculations',
-              'Automated drive eligibility matching',
-              'Department-scoped coordinator workflows',
-            ].map((feat, idx) => (
-              <div key={idx} className="flex items-center space-x-3 text-sm text-primary-100">
-                <CheckCircle className="w-4 h-4 text-accent-500 shrink-0" />
-                <span>{feat}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Bottom Footer */}
-        <div className="relative z-10 pt-6 border-t border-primary-700 text-xs text-primary-100/60">
-          © 2026 Training & Placement Cell, RCPIT Shirpur. All rights reserved.
-        </div>
-      </div>
-
-      {/* Right 45% Form Container */}
-      <div className="w-full lg:w-[45%] bg-bg-surface flex flex-col justify-center items-center p-6 md:p-12 overflow-y-auto">
-        <div className="w-full max-w-md space-y-6">
-          {/* Mobile Header */}
-          <div className="lg:hidden flex items-center space-x-3 mb-4">
-            <div className="w-9 h-9 rounded-lg bg-primary-900 text-accent-500 flex items-center justify-center font-heading font-bold text-lg">
+    <div className="h-screen w-full flex items-center justify-center bg-[#F5F0E6] p-3 sm:p-6 overflow-hidden antialiased font-sans select-none">
+      {/* Ultra-Compact Viewport-Covered Portal Card */}
+      <div className="w-full max-w-3xl bg-white border-2 border-zinc-800 rounded-2xl shadow-xl overflow-hidden my-auto card-pop">
+        {/* Compact Header Ribbon */}
+        <div className="bg-[#FAF8F5] border-b-2 border-zinc-800 px-5 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-xl bg-zinc-900 flex items-center justify-center font-heading font-extrabold text-white text-lg border border-zinc-800 shadow-xs shrink-0">
               PT
             </div>
             <div>
-              <h2 className="font-heading font-bold text-primary-900 text-lg">PlaceTrack</h2>
-              <p className="text-xs text-text-muted">RCPIT Shirpur</p>
-            </div>
-          </div>
-
-          <div>
-            <h2 className="font-heading text-2xl font-bold text-text-primary tracking-tight">
-              Sign in to PlaceTrack
-            </h2>
-            <p className="text-text-secondary text-sm mt-1">
-              Enter your institutional credentials to access your dashboard.
-            </p>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Global Server Error Banner */}
-            {serverError && (
-              <div className="p-3.5 rounded-lg bg-error-100 border border-error-600/30 text-error-600 text-sm flex items-start space-x-2">
-                <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>{serverError}</span>
-              </div>
-            )}
-
-            {/* Identifier Field */}
-            <div>
-              <label className="block text-xs font-semibold text-text-primary uppercase tracking-wider mb-1.5">
-                PRN or Institutional Email
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="e.g. 2021012345 or officer@rcpit.ac.in"
-                  {...register('identifier')}
-                  className={`w-full pl-10 pr-4 py-2.5 bg-bg-base border ${
-                    errors.identifier ? 'border-error-600 focus:ring-error-600' : 'border-border-subtle focus:ring-primary-500'
-                  } rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:bg-white transition-all`}
-                />
-              </div>
-              {errors.identifier && (
-                <p className="text-xs text-error-600 mt-1 font-medium">
-                  {errors.identifier.message}
-                </p>
-              )}
-            </div>
-
-            {/* Password Field */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-text-primary uppercase tracking-wider">
-                  Password
-                </label>
-                <a
-                  href="#forgot"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert('Password reset requested. Please contact the T&P Cell administrator.');
-                  }}
-                  className="text-xs text-primary-500 hover:text-primary-700 font-medium transition-colors"
-                >
-                  Forgot password?
-                </a>
-              </div>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
-                  <Lock className="w-4 h-4" />
-                </div>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  {...register('password')}
-                  className={`w-full pl-10 pr-4 py-2.5 bg-bg-base border ${
-                    errors.password ? 'border-error-600 focus:ring-error-600' : 'border-border-subtle focus:ring-primary-500'
-                  } rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:bg-white transition-all`}
-                />
-              </div>
-              {errors.password && (
-                <p className="text-xs text-error-600 mt-1 font-medium">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            {/* Remember Me */}
-            <div className="flex items-center">
-              <input
-                id="rememberMe"
-                type="checkbox"
-                {...register('rememberMe')}
-                className="w-4 h-4 text-primary-500 border-border-subtle rounded focus:ring-primary-500"
-              />
-              <label htmlFor="rememberMe" className="ml-2 text-xs text-text-secondary">
-                Remember me on this device
-              </label>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-2.5 px-4 bg-primary-900 hover:bg-primary-700 active:bg-primary-900 text-white font-heading font-medium text-sm rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-60 flex items-center justify-center space-x-2"
-            >
-              {isSubmitting ? (
-                <span>Signing in...</span>
-              ) : (
-                <span>Sign in to Dashboard</span>
-              )}
-            </button>
-          </form>
-
-          {/* Demo Credentials Helper Panel */}
-          <div className="pt-4 border-t border-border-subtle">
-            <button
-              type="button"
-              onClick={() => setShowDemoPanel(!showDemoPanel)}
-              className="w-full flex items-center justify-between p-2.5 rounded-lg bg-bg-base hover:bg-primary-100/50 border border-border-subtle transition-colors text-xs font-semibold text-text-secondary"
-            >
               <div className="flex items-center space-x-2">
-                <span className="w-2 h-2 rounded-full bg-accent-500"></span>
-                <span>Demo Credentials (Click to fill)</span>
+                <h1 className="font-heading font-extrabold text-lg text-zinc-900 tracking-tight leading-none">
+                  PlaceTrack
+                </h1>
+                <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full border bg-white border-zinc-700 text-zinc-900">
+                  RCPIT Shirpur
+                </span>
               </div>
-              {showDemoPanel ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
+              <p className="text-[10px] text-zinc-600 font-bold mt-0.5">
+                Placement & Training Management System
+              </p>
+            </div>
+          </div>
 
-            {showDemoPanel && (
-              <div className="mt-2.5 space-y-2">
-                {DEMO_CREDENTIALS.map((demo) => (
-                  <div
-                    key={demo.role}
-                    onClick={() => handleFillDemo(demo)}
-                    className="p-2.5 rounded-lg border border-border-subtle hover:border-primary-500 bg-white cursor-pointer transition-all hover:shadow-xs group flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${demo.badgeColor}`}>
-                          {demo.role === 'tpo' ? 'Officer' : demo.role}
-                        </span>
-                        <span className="text-xs font-medium text-text-primary group-hover:text-primary-700">
-                          {demo.roleLabel}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-text-muted mt-1 font-mono">
-                        {demo.email} / {demo.password}
-                      </p>
-                    </div>
-                    <span className="text-[11px] font-semibold text-primary-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                      Fill
-                    </span>
+          <div className="hidden sm:flex items-center space-x-1.5 text-[11px] font-bold text-zinc-800 bg-white border border-zinc-700 px-3 py-1 rounded-lg">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
+            <span>Single Sign-On</span>
+          </div>
+        </div>
+
+        {/* Compact Body Grid (2 Columns) */}
+        <div className="grid grid-cols-1 md:grid-cols-12">
+          {/* Left Feature Column (5 cols) */}
+          <div className="md:col-span-5 bg-[#FAF8F5] border-b-2 md:border-b-0 md:border-r-2 border-zinc-800 p-4 sm:p-5 flex flex-col justify-between space-y-3">
+            <div className="space-y-3">
+              <span className="inline-flex items-center space-x-1 text-[9px] font-extrabold uppercase tracking-wider text-amber-900 bg-[#F5F0E6] border border-zinc-700 px-2 py-0.5 rounded-full">
+                <Sparkles className="w-3 h-3" />
+                <span>Unified Access</span>
+              </span>
+
+              <h2 className="font-heading text-base font-extrabold text-zinc-900 leading-tight">
+                Automated Placement Portal
+              </h2>
+
+              <p className="text-[11px] text-zinc-600 font-medium leading-normal">
+                Single access point for T&P Officers, Department Coordinators, and Students.
+              </p>
+
+              <div className="space-y-2 pt-1">
+                {[
+                  'Credit-weighted CGPA calculations',
+                  'Automated drive eligibility matching',
+                  'Department-scoped tracking',
+                ].map((feat, idx) => (
+                  <div key={idx} className="flex items-center space-x-2 text-[11px] text-zinc-800 font-bold">
+                    <CheckCircle className="w-3.5 h-3.5 text-amber-800 shrink-0" />
+                    <span>{feat}</span>
                   </div>
                 ))}
               </div>
-            )}
+            </div>
+
+            <div className="pt-2 border-t border-zinc-300 text-[10px] text-zinc-500 font-bold">
+              RCPIT Shirpur • Maharashtra
+            </div>
+          </div>
+
+          {/* Right Form Column (7 cols) */}
+          <div className="md:col-span-7 bg-white p-4 sm:p-5 space-y-3">
+            <div>
+              <h3 className="font-heading text-base font-extrabold text-zinc-900 tracking-tight">
+                Sign in to your account
+              </h3>
+              <p className="text-zinc-600 text-[11px] font-semibold">
+                Enter your PRN or institutional email credentials.
+              </p>
+            </div>
+
+            {/* Compact Form */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+              {serverError && (
+                <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-300 text-rose-800 text-[11px] flex items-center space-x-2 font-bold">
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-700 shrink-0" />
+                  <span className="truncate">{serverError}</span>
+                </div>
+              )}
+
+              {/* Identifier Field */}
+              <div>
+                <label className="block text-[10px] font-extrabold text-zinc-900 uppercase tracking-wider mb-1">
+                  PRN or Email
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-zinc-500">
+                    <Mail className="w-3.5 h-3.5" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="2021012345 or officer@rcpit.ac.in"
+                    {...register('identifier')}
+                    className={`w-full pl-8 pr-3 py-1.5 bg-white border ${
+                      errors.identifier ? 'border-rose-600' : 'border-zinc-700 focus:ring-zinc-800'
+                    } rounded-lg text-xs text-zinc-900 placeholder:text-zinc-400 font-bold focus:outline-none focus:ring-2`}
+                  />
+                </div>
+                {errors.identifier && (
+                  <p className="text-[10px] text-rose-700 mt-0.5 font-bold">
+                    {errors.identifier.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Password Field */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[10px] font-extrabold text-zinc-900 uppercase tracking-wider">
+                    Password
+                  </label>
+                  <a
+                    href="#forgot"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      alert('Password reset requested. Please contact the T&P Cell administrator.');
+                    }}
+                    className="text-[10px] text-zinc-800 hover:underline font-bold"
+                  >
+                    Forgot?
+                  </a>
+                </div>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-zinc-500">
+                    <Lock className="w-3.5 h-3.5" />
+                  </div>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    {...register('password')}
+                    className={`w-full pl-8 pr-3 py-1.5 bg-white border ${
+                      errors.password ? 'border-rose-600' : 'border-zinc-700 focus:ring-zinc-800'
+                    } rounded-lg text-xs text-zinc-900 placeholder:text-zinc-400 font-bold focus:outline-none focus:ring-2`}
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-[10px] text-rose-700 mt-0.5 font-bold">
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Remember Me */}
+              <div className="flex items-center">
+                <input
+                  id="rememberMe"
+                  type="checkbox"
+                  {...register('rememberMe')}
+                  className="w-3.5 h-3.5 text-zinc-900 border-zinc-700 rounded focus:ring-zinc-800"
+                />
+                <label htmlFor="rememberMe" className="ml-2 text-[11px] font-bold text-zinc-700">
+                  Remember me
+                </label>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-2 px-3 bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-900 text-white font-heading font-extrabold text-xs rounded-lg shadow-sm border border-zinc-800 transition-all focus:outline-none focus:ring-2 focus:ring-zinc-800 disabled:opacity-60 flex items-center justify-center space-x-2"
+              >
+                {isSubmitting ? <span>Authenticating...</span> : <span>Sign in to Portal</span>}
+              </button>
+            </form>
+
+            {/* Compact Demo Logins */}
+            <div className="pt-2 border-t border-zinc-300">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] font-extrabold text-zinc-900 uppercase tracking-wider">
+                  Quick Demo Logins (Click to Fill)
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {DEMO_CREDENTIALS.map((demo) => (
+                  <button
+                    key={demo.role}
+                    type="button"
+                    onClick={() => handleFillDemo(demo)}
+                    className="p-1.5 rounded-lg border border-zinc-700 hover:border-zinc-900 bg-[#FAF8F5] hover:bg-[#F5F0E6] text-center transition-all text-[10px] font-extrabold text-zinc-900 truncate"
+                    title={demo.email}
+                  >
+                    {demo.role === 'tpo' ? 'Officer' : demo.role === 'coordinator' ? 'Coordinator' : 'Student'}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
