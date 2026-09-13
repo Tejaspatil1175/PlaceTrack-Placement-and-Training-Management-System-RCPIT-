@@ -16,6 +16,7 @@ if (process.env.NODE_ENV !== 'test') {
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
+const departmentRoutes = require('./routes/departmentRoutes');
 
 // Error handling middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
@@ -30,6 +31,7 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/departments', departmentRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
