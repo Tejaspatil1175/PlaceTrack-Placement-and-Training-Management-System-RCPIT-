@@ -24,7 +24,8 @@ describe('POST /api/auth/login', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
-    expect(res.body.message).toContain('required');
+    expect(res.body.message).toBe('Validation failed');
+    expect(res.body.errors).toBeDefined();
   });
 
   it('should return 401 if user does not exist', async () => {

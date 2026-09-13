@@ -62,7 +62,8 @@ describe('POST /api/auth/first-login-reset', () => {
       .send({ currentPassword: 'DefaultPRN123', newPassword: '123' });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toContain('at least 6 characters');
+    expect(res.body.message).toBe('Validation failed');
+    expect(res.body.errors.some(e => e.message.includes('at least 6 characters'))).toBe(true);
   });
 
   it('should return 400 if new password equals current password', async () => {
@@ -74,7 +75,8 @@ describe('POST /api/auth/first-login-reset', () => {
       .send({ currentPassword: 'DefaultPRN123', newPassword: 'DefaultPRN123' });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toContain('different from the current password');
+    expect(res.body.message).toBe('Validation failed');
+    expect(res.body.errors.some(e => e.message.includes('different from current password'))).toBe(true);
   });
 
   it('should reset password successfully and clear mustResetPassword', async () => {
