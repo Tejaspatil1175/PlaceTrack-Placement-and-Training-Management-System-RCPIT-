@@ -17,6 +17,9 @@ if (process.env.NODE_ENV !== 'test') {
 // Routes
 const authRoutes = require('./routes/authRoutes');
 
+// Error handling middleware
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({
@@ -27,6 +30,12 @@ app.get('/api/health', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+
+// 404 handler
+app.use(notFoundHandler);
+
+// Global centralized error handler
+app.use(errorHandler);
 
 const sequelize = require('./config/database');
 
