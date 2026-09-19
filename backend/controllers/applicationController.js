@@ -118,7 +118,59 @@ const getMyApplications = async (req, res, next) => {
   }
 };
 
+/**
+ * Step 62: Update application status (TPO & Coordinator)
+ */
+const updateApplicationStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status, notes } = req.body;
+
+    const application = await Application.findByPk(id, {
+      include: [
+        {
+          model: Drive,
+          as: 'drive'
+        },
+        {
+          model: StudentProfile,
+          as: 'studentProfile',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'prn', 'name', 'email']
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found'
+      });
+    }
+
+    application.status = status;
+    if (notes !== undefined) {
+      application.notes = notes;
+    }
+    await application.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Application status updated to ${status} successfully`,
+      data: application
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   applyToDrive,
-  getMyApplications
+  getMyApplications,
+  updateApplicationStatus
 };
