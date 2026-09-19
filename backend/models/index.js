@@ -5,6 +5,7 @@ const StudentProfile = require('./StudentProfile');
 const SemesterRecord = require('./SemesterRecord');
 const ExcelUploadLog = require('./ExcelUploadLog');
 const Drive = require('./Drive');
+const Application = require('./Application');
 
 // Associations
 
@@ -62,6 +63,27 @@ Drive.belongsTo(User, {
   as: 'creator'
 });
 
+// 6. StudentProfile <-> Application <-> Drive
+StudentProfile.hasMany(Application, {
+  foreignKey: 'studentId',
+  as: 'applications',
+  onDelete: 'CASCADE'
+});
+Application.belongsTo(StudentProfile, {
+  foreignKey: 'studentId',
+  as: 'studentProfile'
+});
+
+Drive.hasMany(Application, {
+  foreignKey: 'driveId',
+  as: 'applications',
+  onDelete: 'CASCADE'
+});
+Application.belongsTo(Drive, {
+  foreignKey: 'driveId',
+  as: 'drive'
+});
+
 module.exports = {
   sequelize,
   Department,
@@ -69,6 +91,7 @@ module.exports = {
   StudentProfile,
   SemesterRecord,
   ExcelUploadLog,
-  Drive
+  Drive,
+  Application
 };
 
