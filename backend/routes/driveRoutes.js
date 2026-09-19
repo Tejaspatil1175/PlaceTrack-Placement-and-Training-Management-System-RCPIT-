@@ -30,4 +30,12 @@ router.get(
   driveController.getDriveById
 );
 
+// Step 58: GET /api/drives/:id/eligible-students (TPO & Coordinator only)
+router.get(
+  '/:id/eligible-students',
+  authenticate,
+  requireRole('tpo', 'coordinator'),
+  driveController.getEligibleStudents
+);
+
 module.exports = router;

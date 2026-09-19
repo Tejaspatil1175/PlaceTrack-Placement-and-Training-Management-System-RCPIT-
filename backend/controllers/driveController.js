@@ -1,6 +1,6 @@
 const { Op } = require('sequelize');
 const { Drive, User, StudentProfile } = require('../models');
-const { checkStudentEligibility } = require('../services/eligibilityService');
+const { checkStudentEligibility, getEligibleStudentsForDrive } = require('../services/eligibilityService');
 
 /**
  * Step 55: Create a new placement drive (TPO only)
@@ -156,9 +156,28 @@ const getDriveById = async (req, res, next) => {
   }
 };
 
+/**
+ * Step 58: Get all eligible students for a specific drive (TPO & Coordinator)
+ */
+const getEligibleStudents = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await getEligibleStudentsForDrive(id);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Eligible students retrieved successfully',
+      data: result
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   createDrive,
   listDrives,
-  getDriveById
+  getDriveById,
+  getEligibleStudents
 };
 
