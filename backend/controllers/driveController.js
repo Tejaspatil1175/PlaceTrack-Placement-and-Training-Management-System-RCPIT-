@@ -1,5 +1,6 @@
 const { Op } = require('sequelize');
 const { Drive, User, StudentProfile } = require('../models');
+const { checkStudentEligibility } = require('../services/eligibilityService');
 
 /**
  * Step 55: Create a new placement drive (TPO only)
@@ -82,39 +83,9 @@ const listDrives = async (req, res, next) => {
 
       const formattedDrives = drives.map((drive) => {
         const driveJson = drive.toJSON ? drive.toJSON() : { ...drive };
-        if (!studentProfile) {
-          driveJson.isEligible = false;
-          driveJson.eligibilityReasons = ['Student profile not found'];
-        } else {
-          const reasons = [];
-          const now = new Date();
-          const isExpired = new Date(drive.deadline) < now;
-
-          if (isExpired) {
-            reasons.push('Deadline has passed');
-          }
-          if (drive.status === 'COMPLETED' || drive.status === 'CANCELLED') {
-            reasons.push(`Drive is ${drive.status.toLowerCase()}`);
-          }
-          if (parseFloat(studentProfile.cgpa) < parseFloat(drive.minCgpa)) {
-            reasons.push(`CGPA ${studentProfile.cgpa} is below minimum requirement of ${drive.minCgpa}`);
-          }
-          if (parseInt(studentProfile.activeBacklogs, 10) > parseInt(drive.maxActiveBacklogs, 10)) {
-            reasons.push(`Active backlogs (${studentProfile.activeBacklogs}) exceed maximum allowed (${drive.maxActiveBacklogs})`);
-          }
-          const allowedBranches = Array.isArray(drive.allowedBranches)
-            ? drive.allowedBranches
-            : JSON.parse(drive.allowedBranches || '[]');
-          if (allowedBranches.length > 0 && !allowedBranches.includes(studentProfile.branch)) {
-            reasons.push(`Branch '${studentProfile.branch}' is not eligible for this drive`);
-          }
-          if (parseInt(studentProfile.currentSemester, 10) < parseInt(drive.minSemester, 10)) {
-            reasons.push(`Current semester (${studentProfile.currentSemester}) is below minimum semester (${drive.minSemester})`);
-          }
-
-          driveJson.isEligible = reasons.length === 0;
-          driveJson.eligibilityReasons = reasons;
-        }
+        const eligibility = checkStudentEligibility(studentProfile, drive);
+        driveJson.isEligible = eligibility.isEligible;
+        driveJson.eligibilityReasons = eligibility.reasons;
         return driveJson;
       });
 
@@ -164,39 +135,9 @@ const getDriveById = async (req, res, next) => {
       });
 
       const driveJson = drive.toJSON ? drive.toJSON() : { ...drive };
-      if (!studentProfile) {
-        driveJson.isEligible = false;
-        driveJson.eligibilityReasons = ['Student profile not found'];
-      } else {
-        const reasons = [];
-        const now = new Date();
-        const isExpired = new Date(drive.deadline) < now;
-
-        if (isExpired) {
-          reasons.push('Deadline has passed');
-        }
-        if (drive.status === 'COMPLETED' || drive.status === 'CANCELLED') {
-          reasons.push(`Drive is ${drive.status.toLowerCase()}`);
-        }
-        if (parseFloat(studentProfile.cgpa) < parseFloat(drive.minCgpa)) {
-          reasons.push(`CGPA ${studentProfile.cgpa} is below minimum requirement of ${drive.minCgpa}`);
-        }
-        if (parseInt(studentProfile.activeBacklogs, 10) > parseInt(drive.maxActiveBacklogs, 10)) {
-          reasons.push(`Active backlogs (${studentProfile.activeBacklogs}) exceed maximum allowed (${drive.maxActiveBacklogs})`);
-        }
-        const allowedBranches = Array.isArray(drive.allowedBranches)
-          ? drive.allowedBranches
-          : JSON.parse(drive.allowedBranches || '[]');
-        if (allowedBranches.length > 0 && !allowedBranches.includes(studentProfile.branch)) {
-          reasons.push(`Branch '${studentProfile.branch}' is not eligible for this drive`);
-        }
-        if (parseInt(studentProfile.currentSemester, 10) < parseInt(drive.minSemester, 10)) {
-          reasons.push(`Current semester (${studentProfile.currentSemester}) is below minimum semester (${drive.minSemester})`);
-        }
-
-        driveJson.isEligible = reasons.length === 0;
-        driveJson.eligibilityReasons = reasons;
-      }
+      const eligibility = checkStudentEligibility(studentProfile, drive);
+      driveJson.isEligible = eligibility.isEligible;
+      driveJson.eligibilityReasons = eligibility.reasons;
 
       return res.status(200).json({
         success: true,
