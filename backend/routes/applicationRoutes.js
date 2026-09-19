@@ -12,4 +12,12 @@ router.post(
   applicationController.applyToDrive
 );
 
+// Step 61: GET /api/applications/me (Student only)
+router.get(
+  '/me',
+  authenticate,
+  requireRole('student'),
+  applicationController.getMyApplications
+);
+
 module.exports = router;

@@ -81,6 +81,44 @@ const applyToDrive = async (req, res, next) => {
   }
 };
 
+/**
+ * Step 61: View student's own applications (Student only)
+ */
+const getMyApplications = async (req, res, next) => {
+  try {
+    const studentProfile = await StudentProfile.findOne({
+      where: { userId: req.user.id }
+    });
+
+    if (!studentProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student profile not found'
+      });
+    }
+
+    const applications = await Application.findAll({
+      where: { studentId: studentProfile.id },
+      include: [
+        {
+          model: Drive,
+          as: 'drive'
+        }
+      ],
+      order: [['appliedAt', 'DESC']]
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Applications retrieved successfully',
+      data: applications
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
-  applyToDrive
+  applyToDrive,
+  getMyApplications
 };
