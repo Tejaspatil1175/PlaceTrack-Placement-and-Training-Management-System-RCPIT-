@@ -20,6 +20,7 @@ const departmentRoutes = require('./routes/departmentRoutes');
 const userRoutes = require('./routes/userRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const driveRoutes = require('./routes/driveRoutes');
+const applicationRoutes = require('./routes/applicationRoutes');
 
 // Error handling middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
@@ -38,6 +39,7 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/drives', driveRoutes);
+app.use('/api/applications', applicationRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

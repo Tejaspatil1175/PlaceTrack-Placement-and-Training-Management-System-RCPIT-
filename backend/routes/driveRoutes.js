@@ -38,4 +38,13 @@ router.get(
   driveController.getEligibleStudents
 );
 
+// Step 60: POST /api/drives/:id/apply (Student only)
+const applicationController = require('../controllers/applicationController');
+router.post(
+  '/:id/apply',
+  authenticate,
+  requireRole('student'),
+  applicationController.applyToDrive
+);
+
 module.exports = router;
