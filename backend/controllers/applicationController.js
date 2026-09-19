@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const { Application, Drive, StudentProfile, User } = require('../models');
 const { checkStudentEligibility } = require('../services/eligibilityService');
 
@@ -169,8 +170,88 @@ const updateApplicationStatus = async (req, res, next) => {
   }
 };
 
+/**
+ * Step 63: Bulk status update for applications (TPO & Coordinator)
+ */
+const bulkUpdateApplicationStatus = async (req, res, next) => {
+  try {
+    const { applicationIds, status, notes } = req.body;
+
+    const updateFields = { status };
+    if (notes !== undefined) {
+      updateFields.notes = notes;
+    }
+
+    const [affectedCount] = await Application.update(updateFields, {
+      where: {
+        id: {
+          [Op.in]: applicationIds
+        }
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully updated ${affectedCount} application(s) to status '${status}'`,
+      data: {
+        affectedCount,
+        status
+      }
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get all applications for a specific drive (TPO & Coordinator)
+ */
+const getDriveApplications = async (req, res, next) => {
+  try {
+    const driveId = req.params.driveId || req.params.id;
+    const { status } = req.query;
+
+    const where = { driveId };
+    if (status) {
+      where.status = status;
+    }
+
+    const applications = await Application.findAll({
+      where,
+      include: [
+        {
+          model: StudentProfile,
+          as: 'studentProfile',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'prn', 'name', 'email', 'phone', 'gender', 'category']
+            }
+          ]
+        },
+        {
+          model: Drive,
+          as: 'drive'
+        }
+      ],
+      order: [['appliedAt', 'ASC']]
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Drive applications retrieved successfully',
+      data: applications
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   applyToDrive,
   getMyApplications,
-  updateApplicationStatus
+  updateApplicationStatus,
+  bulkUpdateApplicationStatus,
+  getDriveApplications
 };

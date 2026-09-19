@@ -4,7 +4,7 @@ const applicationController = require('../controllers/applicationController');
 const authenticate = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
 const validate = require('../middleware/validate');
-const { validateUpdateStatus } = require('../validators/applicationValidator');
+const { validateUpdateStatus, validateBulkUpdateStatus } = require('../validators/applicationValidator');
 
 // Step 60: POST /api/applications/apply/:driveId (Student only)
 router.post(
@@ -30,6 +30,24 @@ router.put(
   validateUpdateStatus,
   validate,
   applicationController.updateApplicationStatus
+);
+
+// Step 63: POST /api/applications/bulk-status (TPO & Coordinator)
+router.post(
+  '/bulk-status',
+  authenticate,
+  requireRole('tpo', 'coordinator'),
+  validateBulkUpdateStatus,
+  validate,
+  applicationController.bulkUpdateApplicationStatus
+);
+
+// GET /api/applications/drive/:driveId (TPO & Coordinator)
+router.get(
+  '/drive/:driveId',
+  authenticate,
+  requireRole('tpo', 'coordinator'),
+  applicationController.getDriveApplications
 );
 
 module.exports = router;
