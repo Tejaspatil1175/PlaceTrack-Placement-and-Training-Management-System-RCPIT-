@@ -16,4 +16,18 @@ router.post(
   driveController.createDrive
 );
 
+// Step 56: GET /api/drives (Authenticated: TPO, Coordinator, Student)
+router.get(
+  '/',
+  authenticate,
+  driveController.listDrives
+);
+
+// GET /api/drives/:id (Authenticated: TPO, Coordinator, Student)
+router.get(
+  '/:id',
+  authenticate,
+  driveController.getDriveById
+);
+
 module.exports = router;
