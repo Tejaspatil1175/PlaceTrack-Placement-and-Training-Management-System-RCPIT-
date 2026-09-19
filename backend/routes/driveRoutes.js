@@ -1,0 +1,19 @@
+const express = require('express');
+const router = express.Router();
+const driveController = require('../controllers/driveController');
+const authenticate = require('../middleware/auth');
+const { requireRole } = require('../middleware/rbac');
+const validate = require('../middleware/validate');
+const { validateCreateDrive } = require('../validators/driveValidator');
+
+// Step 55: POST /api/drives (TPO only)
+router.post(
+  '/',
+  authenticate,
+  requireRole('tpo'),
+  validateCreateDrive,
+  validate,
+  driveController.createDrive
+);
+
+module.exports = router;
