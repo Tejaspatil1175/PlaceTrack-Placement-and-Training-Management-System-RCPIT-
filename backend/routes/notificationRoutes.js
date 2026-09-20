@@ -20,5 +20,27 @@ router.post(
   notificationController.createNotification
 );
 
+/**
+ * Step 69: List notifications for the authenticated user/student
+ * GET /api/notifications/me
+ */
+router.get(
+  '/me',
+  authenticate,
+  notificationController.getMyNotifications
+);
+
+/**
+ * List all notifications (TPO & Coordinator only)
+ * GET /api/notifications
+ */
+router.get(
+  '/',
+  authenticate,
+  requireRole('tpo', 'coordinator'),
+  notificationController.listNotifications
+);
+
 module.exports = router;
+
 

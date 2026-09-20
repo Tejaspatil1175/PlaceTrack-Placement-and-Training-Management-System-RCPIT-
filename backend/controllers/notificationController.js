@@ -99,6 +99,124 @@ const createNotification = async (req, res, next) => {
   }
 };
 
-module.exports = {
-  createNotification
+/**
+ * Step 69: List notifications for current user/student (GET /api/notifications/me)
+ */
+const getMyNotifications = async (req, res, next) => {
+  try {
+    const userRole = req.user.role;
+    const departmentId = req.user.departmentId;
+
+    let targetConditions = [];
+
+    if (userRole === 'student') {
+      targetConditions = [
+        { targetType: 'ALL' },
+        { targetType: 'STUDENTS' }
+      ];
+      if (departmentId) {
+        targetConditions.push({
+          targetType: 'DEPARTMENT',
+          targetDepartmentId: departmentId
+        });
+      }
+    } else if (userRole === 'coordinator') {
+      targetConditions = [
+        { targetType: 'ALL' },
+        { targetType: 'COORDINATORS' }
+      ];
+      if (departmentId) {
+        targetConditions.push({
+          targetType: 'DEPARTMENT',
+          targetDepartmentId: departmentId
+        });
+      }
+    } else {
+      // TPO sees all
+      targetConditions = [
+        { targetType: 'ALL' },
+        { targetType: 'STUDENTS' },
+        { targetType: 'COORDINATORS' },
+        { targetType: 'DEPARTMENT' }
+      ];
+    }
+
+    const notifications = await Notification.findAll({
+      where: {
+        [Op.or]: targetConditions
+      },
+      include: [
+        {
+          model: User,
+          as: 'sender',
+          attributes: ['id', 'name', 'email', 'role']
+        },
+        {
+          model: Department,
+          as: 'targetDepartment',
+          attributes: ['id', 'name']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Notifications retrieved successfully',
+      data: notifications
+    });
+  } catch (error) {
+    return next(error);
+  }
 };
+
+/**
+ * List all notifications (TPO and Coordinator)
+ * GET /api/notifications
+ */
+const listNotifications = async (req, res, next) => {
+  try {
+    const userRole = req.user.role;
+    const where = {};
+
+    if (userRole === 'coordinator') {
+      where[Op.or] = [
+        { sentBy: req.user.id },
+        { targetType: 'DEPARTMENT', targetDepartmentId: req.user.departmentId },
+        { targetType: 'ALL' }
+      ];
+    }
+
+    const notifications = await Notification.findAll({
+      where,
+      include: [
+        {
+          model: User,
+          as: 'sender',
+          attributes: ['id', 'name', 'email', 'role']
+        },
+        {
+          model: Department,
+          as: 'targetDepartment',
+          attributes: ['id', 'name']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Notifications list retrieved successfully',
+      data: notifications
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+module.exports = {
+  createNotification,
+  getMyNotifications,
+  listNotifications
+};
+
