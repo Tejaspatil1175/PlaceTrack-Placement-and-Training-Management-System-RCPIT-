@@ -6,6 +6,7 @@ const SemesterRecord = require('./SemesterRecord');
 const ExcelUploadLog = require('./ExcelUploadLog');
 const Drive = require('./Drive');
 const Application = require('./Application');
+const Notification = require('./Notification');
 
 // Associations
 
@@ -84,6 +85,27 @@ Application.belongsTo(Drive, {
   as: 'drive'
 });
 
+// 7. Notification Associations (User sent, Department targeted)
+User.hasMany(Notification, {
+  foreignKey: 'sentBy',
+  as: 'sentNotifications',
+  onDelete: 'CASCADE'
+});
+Notification.belongsTo(User, {
+  foreignKey: 'sentBy',
+  as: 'sender'
+});
+
+Department.hasMany(Notification, {
+  foreignKey: 'targetDepartmentId',
+  as: 'notifications',
+  onDelete: 'SET NULL'
+});
+Notification.belongsTo(Department, {
+  foreignKey: 'targetDepartmentId',
+  as: 'targetDepartment'
+});
+
 module.exports = {
   sequelize,
   Department,
@@ -92,6 +114,8 @@ module.exports = {
   SemesterRecord,
   ExcelUploadLog,
   Drive,
-  Application
+  Application,
+  Notification
 };
+
 
