@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const { Application, Drive, StudentProfile, User } = require('../models');
 const { checkStudentEligibility } = require('../services/eligibilityService');
+const { sendStatusUpdateEmail } = require('../services/emailService');
 
 /**
  * Step 60: Apply to a placement drive (Student only)
@@ -120,7 +121,7 @@ const getMyApplications = async (req, res, next) => {
 };
 
 /**
- * Step 62: Update application status (TPO & Coordinator)
+ * Step 62 & 67: Update application status and trigger email (TPO & Coordinator)
  */
 const updateApplicationStatus = async (req, res, next) => {
   try {
@@ -160,6 +161,21 @@ const updateApplicationStatus = async (req, res, next) => {
     }
     await application.save();
 
+    // Step 67: Asynchronously send email notification to the student
+    const studentUser = application.studentProfile?.user;
+    const drive = application.drive;
+    if (studentUser && studentUser.email) {
+      sendStatusUpdateEmail({
+        userEmail: studentUser.email,
+        studentName: studentUser.name,
+        companyName: drive ? drive.companyName : 'Placement Drive',
+        role: drive ? drive.role : '',
+        ctc: drive ? drive.ctc : null,
+        status,
+        notes: notes || application.notes
+      }).catch(err => console.error('[Application Email Notification Error]:', err.message));
+    }
+
     return res.status(200).json({
       success: true,
       message: `Application status updated to ${status} successfully`,
@@ -171,7 +187,7 @@ const updateApplicationStatus = async (req, res, next) => {
 };
 
 /**
- * Step 63: Bulk status update for applications (TPO & Coordinator)
+ * Step 63 & 67: Bulk status update for applications and trigger email notifications (TPO & Coordinator)
  */
 const bulkUpdateApplicationStatus = async (req, res, next) => {
   try {
@@ -182,6 +198,32 @@ const bulkUpdateApplicationStatus = async (req, res, next) => {
       updateFields.notes = notes;
     }
 
+    // Step 67: Retrieve applications to notify students
+    const applications = await Application.findAll({
+      where: {
+        id: {
+          [Op.in]: applicationIds
+        }
+      },
+      include: [
+        {
+          model: Drive,
+          as: 'drive'
+        },
+        {
+          model: StudentProfile,
+          as: 'studentProfile',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'name', 'email']
+            }
+          ]
+        }
+      ]
+    });
+
     const [affectedCount] = await Application.update(updateFields, {
       where: {
         id: {
@@ -189,6 +231,28 @@ const bulkUpdateApplicationStatus = async (req, res, next) => {
         }
       }
     });
+
+    // Send emails in background
+    if (applications && applications.length > 0) {
+      Promise.allSettled(
+        applications.map(app => {
+          const studentUser = app.studentProfile?.user;
+          const drive = app.drive;
+          if (studentUser && studentUser.email) {
+            return sendStatusUpdateEmail({
+              userEmail: studentUser.email,
+              studentName: studentUser.name,
+              companyName: drive ? drive.companyName : 'Placement Drive',
+              role: drive ? drive.role : '',
+              ctc: drive ? drive.ctc : null,
+              status,
+              notes: notes || app.notes
+            });
+          }
+          return Promise.resolve();
+        })
+      ).catch(err => console.error('[Bulk Email Notification Error]:', err.message));
+    }
 
     return res.status(200).json({
       success: true,
@@ -202,6 +266,7 @@ const bulkUpdateApplicationStatus = async (req, res, next) => {
     return next(error);
   }
 };
+
 
 /**
  * Get all applications for a specific drive (TPO & Coordinator)

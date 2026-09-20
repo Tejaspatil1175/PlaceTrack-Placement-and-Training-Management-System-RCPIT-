@@ -100,9 +100,46 @@ const resetTransporter = () => {
   transporter = null;
 };
 
+const {
+  getSelectionEmailTemplate,
+  getRejectionEmailTemplate,
+  getShortlistEmailTemplate
+} = require('../templates/emailTemplates');
+
+/**
+ * Send status update email for a student application
+ */
+const sendStatusUpdateEmail = async ({ userEmail, studentName, companyName, role, ctc, status, notes }) => {
+  if (!userEmail) {
+    return { success: false, error: 'User email missing' };
+  }
+
+  let template = null;
+  if (status === 'ACCEPTED') {
+    template = getSelectionEmailTemplate({ studentName, companyName, role, ctc, notes });
+  } else if (status === 'REJECTED') {
+    template = getRejectionEmailTemplate({ studentName, companyName, role, notes });
+  } else if (status === 'SHORTLISTED') {
+    template = getShortlistEmailTemplate({ studentName, companyName, role, notes });
+  }
+
+  if (template) {
+    return sendEmail({
+      to: userEmail,
+      subject: template.subject,
+      html: template.html,
+      text: template.text
+    });
+  }
+
+  return { success: true, message: `No email template required for status: ${status}` };
+};
+
 module.exports = {
   getTransporter,
   sendEmail,
+  sendStatusUpdateEmail,
   verifyTransporter,
   resetTransporter
 };
+
