@@ -50,7 +50,9 @@ export function AnalyticsPage() {
   });
 
   // Fallback analytical datasets
-  const branchData = data?.branchWisePlacement || [
+  const payload = data?.data || data;
+
+  const branchData = payload?.branchWisePlacement || [
     { branch: 'Computer', rate: 82, target: 90 },
     { branch: 'IT', rate: 78, target: 85 },
     { branch: 'AI & DS', rate: 74, target: 80 },
@@ -59,26 +61,27 @@ export function AnalyticsPage() {
     { branch: 'Civil', rate: 45, target: 60 },
   ];
 
-  const packageData = data?.packageDistribution || [
+  const packageData = payload?.packageDistribution || [
     { bracket: '< 4.0 LPA', count: 45 },
     { bracket: '4.0 - 6.0 LPA', count: 85 },
     { bracket: '6.0 - 8.5 LPA', count: 42 },
     { bracket: '8.5+ LPA', count: 13 },
   ];
 
-  const conversionFunnelData = data?.conversionFunnel || [
+  const conversionFunnelData = payload?.conversionFunnel || [
     { stage: 'Total Applications', count: 1280, fill: '#1C3F63' },
     { stage: 'Shortlisted for Test/Interview', count: 420, fill: '#2D5A82' },
     { stage: 'Final Offers Issued', count: 185, fill: '#B8862E' },
   ];
 
-  const yearlyTrend = data?.yearlyTrend || [
+  const yearlyTrend = payload?.yearlyTrend || [
     { year: '2021', placed: 110, rate: 55 },
     { year: '2022', placed: 135, rate: 60 },
     { year: '2023', placed: 152, rate: 64 },
     { year: '2024', placed: 168, rate: 66 },
     { year: '2025', placed: 185, rate: 68.5 },
   ];
+
 
   return (
     <div className="space-y-6">

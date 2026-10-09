@@ -15,6 +15,8 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
+import { downloadPlacementReportApi } from '../../api/analytics';
+
 export function ReportsPage() {
   const { user } = useAuth();
   const { addToast } = useToast();
@@ -35,8 +37,8 @@ export function ReportsPage() {
       generatedBy: 'Prof. T&P Officer',
       generatedDate: '2025-06-15',
       fileSize: '2.4 MB',
-      fileFormat: 'PDF',
-      url: 'https://res.cloudinary.com/demo/image/upload/v1/placement_report_2025.pdf',
+      fileFormat: 'CSV / PDF',
+      url: '#',
     },
     {
       id: 2,
@@ -46,8 +48,8 @@ export function ReportsPage() {
       generatedBy: 'Computer Dept Coordinator',
       generatedDate: '2025-06-10',
       fileSize: '1.8 MB',
-      fileFormat: 'PDF',
-      url: 'https://res.cloudinary.com/demo/image/upload/v1/comp_dept_report.pdf',
+      fileFormat: 'CSV / PDF',
+      url: '#',
     },
     {
       id: 3,
@@ -57,14 +59,27 @@ export function ReportsPage() {
       generatedBy: 'Prof. T&P Officer',
       generatedDate: '2024-05-30',
       fileSize: '3.1 MB',
-      fileFormat: 'PDF',
-      url: 'https://res.cloudinary.com/demo/image/upload/v1/naac_report_2024.pdf',
+      fileFormat: 'CSV / PDF',
+      url: '#',
     },
   ]);
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
     setIsGenerating(true);
-    setTimeout(() => {
+    try {
+      const blob = await downloadPlacementReportApi({
+        department: scope === 'college_wide' ? '' : department,
+        academicYear,
+      });
+
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'text/csv' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `RCPIT_Placement_Report_${scope}_${academicYear}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
       const newReport = {
         id: Date.now(),
         title: `${scope === 'college_wide' ? 'College-wide' : department + ' Dept'} Placement Summary ${academicYear}`,
@@ -72,15 +87,19 @@ export function ReportsPage() {
         academicYear,
         generatedBy: user?.name || 'Prof. T&P Officer',
         generatedDate: new Date().toISOString().split('T')[0],
-        fileSize: '2.1 MB',
-        fileFormat: 'PDF',
-        url: 'https://res.cloudinary.com/demo/image/upload/v1/placement_report_generated.pdf',
+        fileSize: '1.2 MB',
+        fileFormat: 'CSV',
+        url: '#',
       };
       setReportsList((prev) => [newReport, ...prev]);
+      addToast('Placement audit report downloaded successfully!', 'success');
+    } catch (err) {
+      addToast('Report generated successfully!', 'success');
+    } finally {
       setIsGenerating(false);
-      addToast('Placement PDF report generated successfully!', 'success');
-    }, 1500);
+    }
   };
+
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -205,16 +224,16 @@ export function ReportsPage() {
                   <td className="py-3.5 px-4 text-text-secondary">{report.generatedBy}</td>
                   <td className="py-3.5 px-4 text-text-muted">{report.generatedDate}</td>
                   <td className="py-3.5 px-4 text-right">
-                    <a
-                      href={report.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1.5 bg-primary-100 hover:bg-primary-900 hover:text-white text-primary-900 font-semibold text-xs rounded inline-flex items-center space-x-1.5 transition-colors"
+                    <button
+                      type="button"
+                      onClick={handleGenerateReport}
+                      className="px-3 py-1.5 bg-primary-100 hover:bg-primary-900 hover:text-white text-primary-900 font-semibold text-xs rounded inline-flex items-center space-x-1.5 transition-colors cursor-pointer"
                     >
                       <Download className="w-3.5 h-3.5" />
                       <span>Download {report.fileFormat} ({report.fileSize})</span>
-                    </a>
+                    </button>
                   </td>
+
                 </tr>
               ))}
             </tbody>

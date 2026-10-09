@@ -89,7 +89,11 @@ export function StudentsListPage() {
     },
   ];
 
-  const studentsList = data?.students || fallbackStudents;
+  const studentsList =
+    data?.data?.students ||
+    data?.students ||
+    (Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : fallbackStudents));
+
 
   // Filter apply client-side if needed
   const filteredStudents = studentsList.filter((s) => {

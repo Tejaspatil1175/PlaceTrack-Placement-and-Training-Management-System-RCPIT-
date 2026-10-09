@@ -44,7 +44,8 @@ export function StudentDetailPage() {
   }
 
   // Fallback student details if offline/demo
-  const student = data || {
+  const student = data?.data || data || {
+
     id: id || 1,
     prn: '2021012345',
     name: 'Rahul Ramesh Sharma',
