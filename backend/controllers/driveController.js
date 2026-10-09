@@ -50,16 +50,18 @@ const createDrive = async (req, res, next) => {
 const listDrives = async (req, res, next) => {
   try {
     const { status, search } = req.query;
+    const { Application } = require('../models');
     const where = {};
 
-    if (status) {
+    if (status && status !== 'all') {
       where.status = status;
     }
 
-    if (search) {
+    if (search && search.trim()) {
+      const q = search.trim();
       where[Op.or] = [
-        { companyName: { [Op.like]: `%${search}%` } },
-        { role: { [Op.like]: `%${search}%` } }
+        { companyName: { [Op.like]: `%${q}%` } },
+        { role: { [Op.like]: `%${q}%` } }
       ];
     }
 
@@ -70,12 +72,17 @@ const listDrives = async (req, res, next) => {
           model: User,
           as: 'creator',
           attributes: ['id', 'name', 'email']
+        },
+        {
+          model: Application,
+          as: 'applications',
+          attributes: ['id', 'studentId', 'status']
         }
       ],
       order: [['deadline', 'ASC'], ['createdAt', 'DESC']]
     });
 
-    // If student, annotate each drive with eligibility status
+    // If student, annotate each drive with eligibility status and application status
     if (req.user.role === 'student') {
       const studentProfile = await StudentProfile.findOne({
         where: { userId: req.user.id }
@@ -84,8 +91,13 @@ const listDrives = async (req, res, next) => {
       const formattedDrives = drives.map((drive) => {
         const driveJson = drive.toJSON ? drive.toJSON() : { ...drive };
         const eligibility = checkStudentEligibility(studentProfile, drive);
+        const myApp = (driveJson.applications || []).find((a) => a.studentId === studentProfile?.id);
+
         driveJson.isEligible = eligibility.isEligible;
         driveJson.eligibilityReasons = eligibility.reasons;
+        driveJson.hasApplied = Boolean(myApp);
+        driveJson.applicationStatus = myApp ? myApp.status : null;
+        driveJson.applicantCount = (driveJson.applications || []).length;
         return driveJson;
       });
 
@@ -96,10 +108,16 @@ const listDrives = async (req, res, next) => {
       });
     }
 
+    const formattedDrives = drives.map((drive) => {
+      const driveJson = drive.toJSON ? drive.toJSON() : { ...drive };
+      driveJson.applicantCount = (driveJson.applications || []).length;
+      return driveJson;
+    });
+
     return res.status(200).json({
       success: true,
       message: 'Drives fetched successfully',
-      data: drives
+      data: formattedDrives
     });
   } catch (error) {
     return next(error);
@@ -112,12 +130,18 @@ const listDrives = async (req, res, next) => {
 const getDriveById = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const { Application } = require('../models');
     const drive = await Drive.findByPk(id, {
       include: [
         {
           model: User,
           as: 'creator',
           attributes: ['id', 'name', 'email']
+        },
+        {
+          model: Application,
+          as: 'applications',
+          attributes: ['id', 'studentId', 'status', 'appliedAt']
         }
       ]
     });
@@ -129,15 +153,21 @@ const getDriveById = async (req, res, next) => {
       });
     }
 
+    const driveJson = drive.toJSON ? drive.toJSON() : { ...drive };
+    driveJson.applicantCount = (driveJson.applications || []).length;
+
     if (req.user.role === 'student') {
       const studentProfile = await StudentProfile.findOne({
         where: { userId: req.user.id }
       });
 
-      const driveJson = drive.toJSON ? drive.toJSON() : { ...drive };
       const eligibility = checkStudentEligibility(studentProfile, drive);
+      const myApp = (driveJson.applications || []).find((a) => a.studentId === studentProfile?.id);
+
       driveJson.isEligible = eligibility.isEligible;
       driveJson.eligibilityReasons = eligibility.reasons;
+      driveJson.hasApplied = Boolean(myApp);
+      driveJson.applicationStatus = myApp ? myApp.status : null;
 
       return res.status(200).json({
         success: true,
@@ -149,7 +179,7 @@ const getDriveById = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: 'Drive fetched successfully',
-      data: drive
+      data: driveJson
     });
   } catch (error) {
     return next(error);

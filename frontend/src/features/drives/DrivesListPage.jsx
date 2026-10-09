@@ -34,8 +34,9 @@ export function DrivesListPage() {
     queryKey: ['drivesList', studentTab, role],
     queryFn: async () => {
       try {
-        return await getDrivesApi({ tab: studentTab });
+        return await getDrivesApi();
       } catch (err) {
+        console.warn('Drives fetch error, using fallback:', err);
         return null;
       }
     },
@@ -45,7 +46,7 @@ export function DrivesListPage() {
   const applyMutation = useMutation({
     mutationFn: async (driveId) => {
       setApplyingDriveId(driveId);
-      return await applyToDriveApi({ driveId });
+      return await applyToDriveApi(driveId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['drivesList'] });
@@ -68,101 +69,60 @@ export function DrivesListPage() {
       id: 1,
       companyName: 'Tata Consultancy Services (TCS)',
       jobTitle: 'Software Engineer (Ninja / Digital)',
-      salaryPackage: '7.0 LPA',
+      role: 'Software Engineer (Ninja / Digital)',
+      salaryPackage: '7.50 LPA',
+      ctc: '7.50',
       companyType: 'IT Services',
       minCgpa: 6.5,
       maxBacklogs: 0,
-      allowedBranches: ['Computer', 'IT', 'AI&DS', 'ENTC'],
-      minSemester: 7,
-      deadline: '2026-09-25',
-      status: 'Open',
-      applicantCount: 142,
+      allowedBranches: ['Computer Engineering', 'Information Technology', 'AI&DS', 'ENTC'],
+      minSemester: 6,
+      deadline: '2026-11-15',
+      status: 'ONGOING',
+      applicantCount: 6,
       hasApplied: false,
     },
     {
       id: 2,
       companyName: 'Infosys Limited',
       jobTitle: 'Specialist Programmer',
-      salaryPackage: '9.5 LPA',
+      role: 'Specialist Programmer',
+      salaryPackage: '9.50 LPA',
+      ctc: '9.50',
       companyType: 'Product & Consulting',
       minCgpa: 7.5,
       maxBacklogs: 0,
-      allowedBranches: ['Computer', 'IT'],
-      minSemester: 7,
-      deadline: '2026-09-28',
-      status: 'Open',
-      applicantCount: 88,
+      allowedBranches: ['Computer Engineering', 'Information Technology'],
+      minSemester: 6,
+      deadline: '2026-11-20',
+      status: 'ONGOING',
+      applicantCount: 3,
       hasApplied: true,
       applicationStatus: 'Shortlisted',
     },
-    {
-      id: 3,
-      companyName: 'Capgemini Technology',
-      jobTitle: 'Senior Analyst',
-      salaryPackage: '5.5 LPA',
-      companyType: 'IT Services',
-      minCgpa: 6.0,
-      maxBacklogs: 1,
-      allowedBranches: ['Computer', 'IT', 'AI&DS', 'ENTC', 'Electrical'],
-      minSemester: 7,
-      deadline: '2026-10-02',
-      status: 'Shortlisting',
-      applicantCount: 195,
-      hasApplied: false,
-    },
-    {
-      id: 4,
-      companyName: 'Persistent Systems',
-      jobTitle: 'Software Development Engineer',
-      salaryPackage: '8.5 LPA',
-      companyType: 'Software Products',
-      minCgpa: 8.0,
-      maxBacklogs: 0,
-      allowedBranches: ['Computer', 'IT'],
-      minSemester: 7,
-      deadline: '2026-10-10',
-      status: 'Open',
-      applicantCount: 45,
-      hasApplied: false,
-    },
-    {
-      id: 5,
-      companyName: 'KPIT Technologies',
-      jobTitle: 'Embedded Systems Engineer',
-      salaryPackage: '6.0 LPA',
-      companyType: 'Automotive Software',
-      minCgpa: 6.5,
-      maxBacklogs: 0,
-      allowedBranches: ['ENTC', 'Electrical', 'Mechanical'],
-      minSemester: 7,
-      deadline: '2026-10-15',
-      status: 'Upcoming',
-      applicantCount: 12,
-      hasApplied: false,
-    },
   ];
 
-  const rawDrives = data?.drives || fallbackDrives;
+  const apiDrives = data?.data || (Array.isArray(data) ? data : data?.drives);
+  const rawDrives = Array.isArray(apiDrives) ? apiDrives : fallbackDrives;
 
   // Filter for student tabs if student role
   const filteredDrives = rawDrives.filter((d) => {
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
       const matchComp = d.companyName?.toLowerCase().includes(q);
-      const matchRole = d.jobTitle?.toLowerCase().includes(q);
+      const matchRole = (d.role || d.jobTitle)?.toLowerCase().includes(q);
       if (!matchComp && !matchRole) return false;
     }
 
     if (isStudent) {
       if (studentTab === 'applied') return Boolean(d.hasApplied);
       if (studentTab === 'eligible') {
+        if (d.isEligible !== undefined) return d.isEligible;
         const studentCgpa = parseFloat(user?.cgpa || 8.75);
         const studentBacklogs = user?.activeBacklogs || 0;
-        const studentBranch = user?.branch || 'Computer';
         const minCgpa = parseFloat(d.minCgpa || 6.5);
-        const maxBacklogs = parseInt(d.maxBacklogs || 0, 10);
-        const allowedBranches = d.allowedBranches || ['Computer', 'IT'];
-        return studentCgpa >= minCgpa && studentBacklogs <= maxBacklogs && allowedBranches.includes(studentBranch);
+        const maxBacklogs = parseInt(d.maxActiveBacklogs || d.maxBacklogs || 0, 10);
+        return studentCgpa >= minCgpa && studentBacklogs <= maxBacklogs;
       }
     }
     return true;

@@ -50,7 +50,7 @@ export function DriveDetailPage() {
   const applyMutation = useMutation({
     mutationFn: async () => {
       setIsApplying(true);
-      return await applyToDriveApi({ driveId: id });
+      return await applyToDriveApi(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['driveDetail', id] });
@@ -74,40 +74,44 @@ export function DriveDetailPage() {
     },
   });
 
-  // Fallback mock drive detail
-  const drive = data || {
+  const fallbackDrive = {
     id: id || 1,
     companyName: 'Tata Consultancy Services (TCS)',
     jobTitle: 'Software Engineer (Ninja / Digital)',
-    salaryPackage: '7.0 LPA',
+    role: 'Software Engineer (Ninja / Digital)',
+    salaryPackage: '7.50 LPA',
+    ctc: '7.50',
     companyType: 'IT Services & Consulting',
     description:
       'Tata Consultancy Services is seeking high-performing BTech engineering graduates for software engineering and digital technology roles. Selected candidates will undergo training on cloud technologies, full-stack web development, and AI engineering.',
     minCgpa: 6.5,
     maxBacklogs: 0,
-    allowedBranches: ['Computer', 'IT', 'AI&DS', 'ENTC'],
-    minSemester: 7,
-    deadline: '2026-09-25',
-    status: 'Open',
-    applicantCount: 142,
+    allowedBranches: ['Computer Engineering', 'Information Technology', 'AI&DS', 'ENTC'],
+    minSemester: 6,
+    deadline: '2026-11-15',
+    status: 'ONGOING',
+    applicantCount: 6,
     hasApplied: false,
     rounds: [
-      { id: 1, roundName: 'Round 1: Online Aptitude & Coding Test', date: '28 Sept 2026' },
-      { id: 2, roundName: 'Round 2: Technical Interview', date: '02 Oct 2026' },
-      { id: 3, roundName: 'Round 3: HR & Management Discussion', date: '05 Oct 2026' },
+      { id: 1, roundName: 'Round 1: Online Aptitude & Coding Test', date: '28 Oct 2026' },
+      { id: 2, roundName: 'Round 2: Technical Interview', date: '02 Nov 2026' },
+      { id: 3, roundName: 'Round 3: HR & Management Discussion', date: '05 Nov 2026' },
     ],
     applicantsList: [
-      { id: 1, prn: '2021012345', name: 'Rahul Ramesh Sharma', branch: 'Computer', cgpa: '8.75', status: 'Shortlisted' },
-      { id: 2, prn: '2021012346', name: 'Priya Suresh Patel', branch: 'IT', cgpa: '9.12', status: 'Selected' },
-      { id: 4, prn: '2021012348', name: 'Neha Rajesh Deshmukh', branch: 'Computer', cgpa: '8.90', status: 'Applied' },
-      { id: 5, prn: '2021012349', name: 'Sanket Vijay Patil', branch: 'ENTC', cgpa: '6.45', status: 'Rejected' },
+      { id: 1, prn: '2021012345', name: 'Rahul Ramesh Sharma', branch: 'Computer Engineering', cgpa: '8.79', status: 'Shortlisted' },
+      { id: 2, prn: '2021012346', name: 'Priya Suresh Patel', branch: 'Information Technology', cgpa: '9.13', status: 'Selected' },
+      { id: 4, prn: '2021012348', name: 'Neha Rajesh Deshmukh', branch: 'Computer Engineering', cgpa: '8.91', status: 'Selected' },
+      { id: 5, prn: '2021012349', name: 'Sanket Vijay Patil', branch: 'Electronics and Telecommunication Engineering', cgpa: '6.65', status: 'Applied' },
     ],
   };
 
+  const apiDrive = data?.data || data;
+  const drive = (apiDrive && apiDrive.companyName) ? apiDrive : fallbackDrive;
+
   // Eligibility evaluation if student
-  let isEligible = true;
-  let eligibilityReason = '';
-  if (isStudent && user) {
+  let isEligible = drive.isEligible !== undefined ? drive.isEligible : true;
+  let eligibilityReason = Array.isArray(drive.eligibilityReasons) ? drive.eligibilityReasons.join(', ') : '';
+  if (isStudent && user && drive.isEligible === undefined) {
     const studentCgpa = parseFloat(user.cgpa || 8.75);
     const studentBacklogs = user.activeBacklogs || 0;
     const studentBranch = user.branch || 'Computer';

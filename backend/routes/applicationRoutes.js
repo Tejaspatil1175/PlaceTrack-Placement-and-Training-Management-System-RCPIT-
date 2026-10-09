@@ -14,6 +14,13 @@ router.post(
   applicationController.applyToDrive
 );
 
+// GET /api/applications (Authenticated: TPO, Coordinator, Student)
+router.get(
+  '/',
+  authenticate,
+  applicationController.listApplications
+);
+
 // Step 61: GET /api/applications/me (Student only)
 router.get(
   '/me',

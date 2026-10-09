@@ -137,7 +137,8 @@ export function ApplicationsPage() {
     },
   ];
 
-  const rawApplications = data?.applications || fallbackApplications;
+  const apiApplications = data?.data || (Array.isArray(data) ? data : data?.applications);
+  const rawApplications = Array.isArray(apiApplications) ? apiApplications : fallbackApplications;
 
   // Filter application rows
   const filteredApplications = rawApplications.filter((app) => {
@@ -149,8 +150,8 @@ export function ApplicationsPage() {
       if (!matchName && !matchPrn && !matchComp) return false;
     }
     if (selectedDrive && app.companyName !== selectedDrive) return false;
-    if (selectedDepartment && app.department !== selectedDepartment) return false;
-    if (selectedStatus && app.status !== selectedStatus) return false;
+    if (selectedDepartment && !app.department?.toLowerCase().includes(selectedDepartment.toLowerCase())) return false;
+    if (selectedStatus && app.status?.toUpperCase() !== selectedStatus.toUpperCase()) return false;
     return true;
   });
 

@@ -313,10 +313,120 @@ const getDriveApplications = async (req, res, next) => {
   }
 };
 
+/**
+ * List all applications (TPO & Coordinator across college / department, Student self)
+ */
+const listApplications = async (req, res, next) => {
+  try {
+    if (req.user.role === 'student') {
+      return getMyApplications(req, res, next);
+    }
+
+    const { driveId, status, departmentId, search } = req.query;
+    const { Department } = require('../models');
+    const where = {};
+    const userWhere = {};
+
+    if (driveId && driveId !== 'all') {
+      where.driveId = driveId;
+    }
+
+    if (status && status !== 'all') {
+      let mappedStatus = status.toUpperCase();
+      if (mappedStatus === 'INTERVIEW') mappedStatus = 'SHORTLISTED';
+      if (mappedStatus === 'SELECTED') mappedStatus = 'ACCEPTED';
+      where.status = mappedStatus;
+    }
+
+    if (req.user.role === 'coordinator') {
+      userWhere.departmentId = req.user.departmentId;
+    } else if (departmentId && departmentId !== 'all') {
+      userWhere.departmentId = departmentId;
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim();
+      userWhere[Op.or] = [
+        { name: { [Op.like]: `%${q}%` } },
+        { email: { [Op.like]: `%${q}%` } },
+        { prn: { [Op.like]: `%${q}%` } }
+      ];
+    }
+
+    const applications = await Application.findAll({
+      where,
+      include: [
+        {
+          model: Drive,
+          as: 'drive'
+        },
+        {
+          model: StudentProfile,
+          as: 'studentProfile',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              where: Object.keys(userWhere).length > 0 ? userWhere : undefined,
+              attributes: ['id', 'prn', 'name', 'email', 'phone', 'gender', 'category', 'departmentId'],
+              include: [
+                {
+                  model: Department,
+                  as: 'department',
+                  attributes: ['id', 'name']
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      order: [['appliedAt', 'DESC'], ['createdAt', 'DESC']]
+    });
+
+    const formatted = applications.map((app) => {
+      const appJson = app.toJSON ? app.toJSON() : { ...app };
+      const user = appJson.studentProfile?.user;
+      return {
+        id: appJson.id,
+        studentId: appJson.studentId,
+        studentName: user?.name || 'Student',
+        prn: user?.prn || 'PRN',
+        email: user?.email,
+        phone: user?.phone,
+        department: user?.department?.name || appJson.studentProfile?.branch || 'Engineering',
+        branch: appJson.studentProfile?.branch,
+        cgpa: appJson.studentProfile?.cgpa,
+        activeBacklogs: appJson.studentProfile?.activeBacklogs,
+        driveId: appJson.driveId,
+        companyName: appJson.drive?.companyName || 'Campus Placement',
+        jobTitle: appJson.drive?.role || 'Software Engineer',
+        ctc: appJson.drive?.ctc || '6.5 LPA',
+        appliedAt: appJson.appliedAt || appJson.createdAt,
+        updatedAt: appJson.updatedAt,
+        status: appJson.status,
+        notes: appJson.notes,
+        remarks: appJson.notes,
+        resumeUrl: appJson.studentProfile?.resumeUrl,
+        drive: appJson.drive,
+        studentProfile: appJson.studentProfile
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Applications retrieved successfully',
+      data: formatted
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   applyToDrive,
   getMyApplications,
   updateApplicationStatus,
   bulkUpdateApplicationStatus,
-  getDriveApplications
+  getDriveApplications,
+  listApplications
 };

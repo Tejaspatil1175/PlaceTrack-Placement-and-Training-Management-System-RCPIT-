@@ -1,6 +1,25 @@
 const { Op } = require('sequelize');
 const { Drive, StudentProfile, User, Department } = require('../models');
 
+const BRANCH_ALIAS_MAP = {
+  computer: ['Computer Engineering', 'Computer', 'CS', 'CSE'],
+  'computer engineering': ['Computer Engineering', 'Computer', 'CS', 'CSE'],
+  it: ['Information Technology', 'IT'],
+  'information technology': ['Information Technology', 'IT'],
+  'ai&ds': ['Artificial Intelligence and Data Science', 'AI&DS', 'AI & DS', 'AIDS', 'Data Science'],
+  'ai & ds': ['Artificial Intelligence and Data Science', 'AI&DS', 'AI & DS', 'AIDS', 'Data Science'],
+  'artificial intelligence and data science': ['Artificial Intelligence and Data Science', 'AI&DS'],
+  entc: ['Electronics and Telecommunication Engineering', 'ENTC', 'E&TC', 'Telecommunication'],
+  'e&tc': ['Electronics and Telecommunication Engineering', 'ENTC', 'E&TC', 'Telecommunication'],
+  'electronics and telecommunication engineering': ['Electronics and Telecommunication Engineering', 'ENTC'],
+  mechanical: ['Mechanical Engineering', 'Mechanical', 'MECH'],
+  'mechanical engineering': ['Mechanical Engineering', 'Mechanical', 'MECH'],
+  civil: ['Civil Engineering', 'Civil'],
+  'civil engineering': ['Civil Engineering', 'Civil'],
+  electrical: ['Electrical Engineering', 'Electrical'],
+  'electrical engineering': ['Electrical Engineering', 'Electrical']
+};
+
 /**
  * Checks in-memory eligibility for a single student profile against a drive.
  * @param {Object} studentProfile - StudentProfile instance or plain object
@@ -57,8 +76,19 @@ const checkStudentEligibility = (studentProfile, drive) => {
     }
   }
 
-  if (allowedBranches.length > 0 && !allowedBranches.includes(studentProfile.branch)) {
-    reasons.push(`Branch '${studentProfile.branch}' is not eligible for this drive`);
+  if (allowedBranches.length > 0) {
+    const studentBranchLower = (studentProfile.branch || '').toLowerCase().trim();
+    const isBranchMatch = allowedBranches.some((b) => {
+      const bLower = (b || '').toLowerCase().trim();
+      if (bLower === studentBranchLower) return true;
+      if (studentBranchLower.includes(bLower) || bLower.includes(studentBranchLower)) return true;
+      const aliases = BRANCH_ALIAS_MAP[bLower] || [];
+      return aliases.some((a) => a.toLowerCase() === studentBranchLower || studentBranchLower.includes(a.toLowerCase()));
+    });
+
+    if (!isBranchMatch) {
+      reasons.push(`Branch '${studentProfile.branch}' is not eligible for this drive`);
+    }
   }
 
   const currentSem = parseInt(studentProfile.currentSemester || 1, 10);
@@ -105,7 +135,16 @@ const getEligibleStudentsForDrive = async (driveId) => {
   };
 
   if (allowedBranches.length > 0) {
-    whereClause.branch = { [Op.in]: allowedBranches };
+    const expandedBranches = new Set();
+    for (const b of allowedBranches) {
+      expandedBranches.add(b);
+      const bLower = (b || '').toLowerCase().trim();
+      const variations = BRANCH_ALIAS_MAP[bLower];
+      if (variations) {
+        variations.forEach(v => expandedBranches.add(v));
+      }
+    }
+    whereClause.branch = { [Op.in]: Array.from(expandedBranches) };
   }
 
   const eligibleStudents = await StudentProfile.findAll({

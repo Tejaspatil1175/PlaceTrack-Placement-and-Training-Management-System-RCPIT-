@@ -1,14 +1,8 @@
-import apiClient from './client';
-
 /**
- * Get applications by params (driveId or self)
+ * Get all applications (TPO / Coordinator: all across college, Student: self)
  */
 export const getApplicationsApi = async (params) => {
-  if (params?.driveId) {
-    const response = await apiClient.get(`/applications/drive/${params.driveId}`);
-    return response.data;
-  }
-  const response = await apiClient.get('/applications/me', { params });
+  const response = await apiClient.get('/applications', { params });
   return response.data;
 };
 
@@ -31,7 +25,8 @@ export const getMyApplicationsApi = async () => {
 /**
  * Apply to a placement drive (Student only)
  */
-export const applyToDriveApi = async (driveId) => {
+export const applyToDriveApi = async (driveIdOrObj) => {
+  const driveId = typeof driveIdOrObj === 'object' ? driveIdOrObj?.driveId || driveIdOrObj?.id : driveIdOrObj;
   const response = await apiClient.post(`/applications/apply/${driveId}`);
   return response.data;
 };
