@@ -9,23 +9,38 @@ const poolConfig = {
   max: 10,
   min: 0,
   acquire: 30000,
-  idle: 10000
+  idle: 10000,
+  evict: 5000
 };
 
-const dialectOptions = process.env.DB_SSL === 'true'
-  ? {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false
+const retryConfig = {
+  max: 3,
+  match: [
+    /Connection lost/,
+    /SequelizeConnectionError/,
+    /SequelizeConnectionRefusedError/,
+    /PROTOCOL_CONNECTION_LOST/
+  ]
+};
+
+const dialectOptions = {
+  connectTimeout: 60000,
+  ...(process.env.DB_SSL === 'true'
+    ? {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false
+        }
       }
-    }
-  : {};
+    : {})
+};
 
 if (env.db.url) {
   sequelize = new Sequelize(env.db.url, {
     dialect: 'mysql',
     logging: env.isProduction || env.isTest ? false : console.log,
     pool: poolConfig,
+    retry: retryConfig,
     dialectOptions
   });
 } else {
@@ -35,8 +50,10 @@ if (env.db.url) {
     dialect: 'mysql',
     logging: env.isProduction || env.isTest ? false : console.log,
     pool: poolConfig,
+    retry: retryConfig,
     dialectOptions
   });
 }
+
 
 module.exports = sequelize;

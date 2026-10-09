@@ -48,8 +48,36 @@ const seedDatabase = async () => {
       console.log('TPO Admin already exists.');
     }
 
+    // Seed Super Admin (Tejas Patil)
+    const superAdmins = [
+      { email: 'tejaspatil@rcpit.ac', prn: 'SUPER_TEJAS_AC' },
+      { email: 'tejaspatil@rcpit.ac.in', prn: 'SUPER_TEJAS_IN' }
+    ];
+
+    const superAdminPasswordHash = await hashPassword('tp8788244416');
+    for (const sa of superAdmins) {
+      const existing = await User.findOne({ where: { email: sa.email } });
+      if (existing) {
+        existing.passwordHash = superAdminPasswordHash;
+        existing.role = 'tpo';
+        existing.mustResetPassword = false;
+        await existing.save();
+      } else {
+        await User.create({
+          name: 'Tejas Patil (Super Admin)',
+          email: sa.email,
+          prn: sa.prn,
+          role: 'tpo',
+          passwordHash: superAdminPasswordHash,
+          mustResetPassword: false
+        });
+      }
+      console.log(`Super Admin ${sa.email} verified/configured.`);
+    }
+
     console.log('Seeding completed successfully!');
     process.exit(0);
+
   } catch (error) {
     console.error('Seeding error:', error);
     process.exit(1);

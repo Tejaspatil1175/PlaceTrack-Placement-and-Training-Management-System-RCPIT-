@@ -1,9 +1,16 @@
 export const DEMO_CREDENTIALS = [
   {
     role: 'tpo',
-    roleLabel: 'Main T&P Officer (Super Admin)',
-    email: 'officer@rcpit.demo',
-    password: 'DemoPassword123!',
+    roleLabel: 'Super Admin (Tejas Patil)',
+    email: 'tejaspatil@rcpit.ac',
+    password: 'tp8788244416',
+    badgeColor: 'bg-primary-900 text-white border-primary-900',
+  },
+  {
+    role: 'tpo',
+    roleLabel: 'Main T&P Officer (Default Admin)',
+    email: 'tpo@rcpit.ac.in',
+    password: 'Admin@123',
     badgeColor: 'bg-primary-100 text-primary-900 border-primary-500',
   },
   {
@@ -21,3 +28,4 @@ export const DEMO_CREDENTIALS = [
     badgeColor: 'bg-success-100 text-success-600 border-success-600',
   },
 ];
+
