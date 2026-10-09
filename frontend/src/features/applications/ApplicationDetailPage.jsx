@@ -13,29 +13,49 @@ import {
   Award,
   CheckCircle2,
 } from 'lucide-react';
+import { getApplicationByIdApi } from '../../api/applications';
 
 export function ApplicationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Mock application detail
-  const application = {
-    id: id || 1,
-    companyName: 'Tata Consultancy Services',
-    jobTitle: 'Software Engineer (Ninja / Digital)',
-    ctc: '7.0 LPA',
-    appliedAt: '2026-09-12',
-    updatedAt: '2026-09-14',
-    status: 'Shortlisted',
-    remarks: 'Selected for Round 1 Technical & Coding Interview on Sept 28. Please carry your college ID and updated resume.',
-    rounds: [
-      { name: 'Application Submission', status: 'Completed', date: '12 Sept 2026' },
-      { name: 'Eligibility Screening', status: 'Passed (CGPA 8.75 ≥ 6.5)', date: '13 Sept 2026' },
-      { name: 'Technical Shortlist', status: 'Shortlisted', date: '14 Sept 2026' },
-      { name: 'Technical Interview', status: 'Scheduled (28 Sept 2026)', date: 'Upcoming' },
-      { name: 'Final HR Discussion', status: 'Pending', date: 'TBD' },
-    ],
-  };
+  const { data: responseData, isLoading, isError } = useQuery({
+    queryKey: ['applicationDetail', id],
+    queryFn: () => getApplicationByIdApi(id),
+    enabled: Boolean(id),
+  });
+
+  const application = responseData?.data || null;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto">
+        <Skeleton className="h-8 w-40 rounded" />
+        <Skeleton className="h-48 w-full rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  if (isError || !application) {
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto">
+        <button
+          onClick={() => navigate('/applications')}
+          className="inline-flex items-center space-x-2 text-xs font-semibold text-text-secondary hover:text-primary-900 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Applications</span>
+        </button>
+        <div className="bg-bg-surface border border-border-subtle rounded-xl p-8 text-center">
+          <h3 className="font-heading text-lg font-bold text-text-primary">Application Not Found</h3>
+          <p className="text-xs text-text-secondary mt-1">
+            The requested placement application could not be retrieved from the database.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -99,10 +119,45 @@ export function ApplicationDetailPage() {
             Round Progress Breakdown
           </h4>
           <div className="space-y-2.5">
-            {application.rounds.map((r, i) => (
+            {[
+              {
+                name: 'Application Submission',
+                status: 'Completed',
+                date: application.appliedAt || 'Submitted',
+                passed: true
+              },
+              {
+                name: 'Eligibility Screening',
+                status: application.cgpa ? `Passed (CGPA: ${application.cgpa})` : 'Criteria Verified',
+                date: application.appliedAt || 'Verified',
+                passed: true
+              },
+              {
+                name: 'Technical Shortlist & Assessment',
+                status: ['SHORTLISTED', 'ACCEPTED', 'SELECTED'].includes(application.status?.toUpperCase())
+                  ? 'Shortlisted'
+                  : application.status?.toUpperCase() === 'REJECTED'
+                  ? 'Not Shortlisted'
+                  : 'In Progress / Review',
+                date: application.updatedAt || 'T&P Review',
+                passed: ['SHORTLISTED', 'ACCEPTED', 'SELECTED'].includes(application.status?.toUpperCase())
+              },
+              {
+                name: 'Interview & Selection Decision',
+                status: ['ACCEPTED', 'SELECTED'].includes(application.status?.toUpperCase())
+                  ? 'Selected / Offer Released'
+                  : application.status?.toUpperCase() === 'SHORTLISTED'
+                  ? 'Interview Call Active'
+                  : application.status?.toUpperCase() === 'REJECTED'
+                  ? 'Rejected'
+                  : 'Pending Shortlisting',
+                date: ['ACCEPTED', 'SELECTED'].includes(application.status?.toUpperCase()) ? 'Offer Confirmed' : 'TBD',
+                passed: ['ACCEPTED', 'SELECTED'].includes(application.status?.toUpperCase())
+              }
+            ].map((r, i) => (
               <div key={i} className="p-3 bg-bg-base border border-border-subtle rounded-lg flex items-center justify-between text-xs">
                 <div className="flex items-center space-x-3">
-                  <CheckCircle2 className={`w-4 h-4 ${r.status.includes('Passed') || r.status.includes('Completed') || r.status.includes('Shortlisted') ? 'text-success-600' : 'text-text-muted'}`} />
+                  <CheckCircle2 className={`w-4 h-4 ${r.passed ? 'text-success-600' : 'text-text-muted'}`} />
                   <span className="font-semibold text-text-primary">{r.name}</span>
                 </div>
                 <div className="text-right">

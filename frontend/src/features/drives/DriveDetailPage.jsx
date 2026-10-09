@@ -22,12 +22,14 @@ import {
   Check,
   X,
 } from 'lucide-react';
+import { useToast } from '../../components/ui/Toast';
 
 export function DriveDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
+  const { addToast } = useToast();
   const isStudent = role === 'student';
   const isOfficer = role === 'tpo' || role === 'officer';
 
@@ -54,12 +56,16 @@ export function DriveDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['driveDetail', id] });
+      queryClient.invalidateQueries({ queryKey: ['drivesList'] });
+      queryClient.invalidateQueries({ queryKey: ['applicationsList'] });
+      queryClient.invalidateQueries({ queryKey: ['studentAnalytics'] });
       setIsApplying(false);
-      alert('Application submitted successfully!');
+      addToast('Application submitted successfully! T&P Cell has received your submission.', 'success');
     },
     onError: (err) => {
       setIsApplying(false);
-      alert(err?.response?.data?.message || 'Application submitted successfully! (Demo mode)');
+      const msg = err?.response?.data?.message || err?.message || 'Unable to submit application.';
+      addToast(msg, 'error');
     },
   });
 
@@ -74,57 +80,61 @@ export function DriveDetailPage() {
     },
   });
 
-  const fallbackDrive = {
-    id: id || 1,
-    companyName: 'Tata Consultancy Services (TCS)',
-    jobTitle: 'Software Engineer (Ninja / Digital)',
-    role: 'Software Engineer (Ninja / Digital)',
-    salaryPackage: '7.50 LPA',
-    ctc: '7.50',
-    companyType: 'IT Services & Consulting',
-    description:
-      'Tata Consultancy Services is seeking high-performing BTech engineering graduates for software engineering and digital technology roles. Selected candidates will undergo training on cloud technologies, full-stack web development, and AI engineering.',
-    minCgpa: 6.5,
-    maxBacklogs: 0,
-    allowedBranches: ['Computer Engineering', 'Information Technology', 'AI&DS', 'ENTC'],
-    minSemester: 6,
-    deadline: '2026-11-15',
-    status: 'ONGOING',
-    applicantCount: 6,
-    hasApplied: false,
-    rounds: [
-      { id: 1, roundName: 'Round 1: Online Aptitude & Coding Test', date: '28 Oct 2026' },
-      { id: 2, roundName: 'Round 2: Technical Interview', date: '02 Nov 2026' },
-      { id: 3, roundName: 'Round 3: HR & Management Discussion', date: '05 Nov 2026' },
-    ],
-    applicantsList: [
-      { id: 1, prn: '2021012345', name: 'Rahul Ramesh Sharma', branch: 'Computer Engineering', cgpa: '8.79', status: 'Shortlisted' },
-      { id: 2, prn: '2021012346', name: 'Priya Suresh Patel', branch: 'Information Technology', cgpa: '9.13', status: 'Selected' },
-      { id: 4, prn: '2021012348', name: 'Neha Rajesh Deshmukh', branch: 'Computer Engineering', cgpa: '8.91', status: 'Selected' },
-      { id: 5, prn: '2021012349', name: 'Sanket Vijay Patil', branch: 'Electronics and Telecommunication Engineering', cgpa: '6.65', status: 'Applied' },
-    ],
-  };
-
   const apiDrive = data?.data || data;
-  const drive = (apiDrive && apiDrive.companyName) ? apiDrive : fallbackDrive;
+  const drive = (apiDrive && apiDrive.companyName) ? apiDrive : null;
 
   // Eligibility evaluation if student
-  let isEligible = drive.isEligible !== undefined ? drive.isEligible : true;
-  let eligibilityReason = Array.isArray(drive.eligibilityReasons) ? drive.eligibilityReasons.join(', ') : '';
-  if (isStudent && user && drive.isEligible === undefined) {
-    const studentCgpa = parseFloat(user.cgpa || 8.75);
-    const studentBacklogs = user.activeBacklogs || 0;
-    const studentBranch = user.branch || 'Computer';
+  let isEligible = drive?.isEligible !== undefined ? drive.isEligible : true;
+  let eligibilityReason = Array.isArray(drive?.eligibilityReasons)
+    ? drive.eligibilityReasons.join(', ')
+    : (typeof drive?.eligibilityReasons === 'string' ? drive.eligibilityReasons : '');
+
+  const BRANCH_ALIASES = {
+    computer: ['computer engineering', 'computer', 'cs', 'cse', 'comp'],
+    'computer engineering': ['computer engineering', 'computer', 'cs', 'cse', 'comp'],
+    it: ['information technology', 'it'],
+    'information technology': ['information technology', 'it'],
+    'ai&ds': ['artificial intelligence and data science', 'ai&ds', 'ai & ds', 'aids', 'data science'],
+    'ai & ds': ['artificial intelligence and data science', 'ai&ds', 'ai & ds', 'aids', 'data science'],
+    entc: ['electronics and telecommunication engineering', 'entc', 'e&tc', 'telecommunication', 'electronics'],
+    'e&tc': ['electronics and telecommunication engineering', 'entc', 'e&tc', 'telecommunication', 'electronics'],
+    'electronics and telecommunication engineering': ['electronics and telecommunication engineering', 'entc', 'e&tc'],
+    mechanical: ['mechanical engineering', 'mechanical', 'mech'],
+    'mechanical engineering': ['mechanical engineering', 'mechanical', 'mech'],
+    civil: ['civil engineering', 'civil'],
+    'civil engineering': ['civil engineering', 'civil'],
+    electrical: ['electrical engineering', 'electrical'],
+    'electrical engineering': ['electrical engineering', 'electrical'],
+  };
+
+  const isBranchEligible = (allowedBranches, studentBranch) => {
+    if (!allowedBranches || allowedBranches.length === 0) return true;
+    if (!studentBranch) return true;
+    const sLower = studentBranch.toLowerCase().trim();
+    return allowedBranches.some((b) => {
+      const bLower = (b || '').toLowerCase().trim();
+      if (bLower === sLower || bLower.includes(sLower) || sLower.includes(bLower)) return true;
+      const aliases = BRANCH_ALIASES[bLower] || BRANCH_ALIASES[sLower] || [];
+      return aliases.some((a) => a === sLower || a === bLower || sLower.includes(a) || bLower.includes(a));
+    });
+  };
+
+  if (isStudent && user && drive && drive.isEligible === undefined) {
+    const studentCgpa = parseFloat(user.cgpa || user.studentProfile?.cgpa || 8.75);
+    const studentBacklogs = user.activeBacklogs || user.studentProfile?.activeBacklogs || 0;
+    const studentBranch = user.branch || user.studentProfile?.branch || user.departmentName || 'Computer';
+    const allowedBranches = Array.isArray(drive.allowedBranches) ? drive.allowedBranches : ['Computer Engineering', 'Information Technology', 'AI&DS'];
+    const maxBacklogs = parseInt(drive.maxActiveBacklogs !== undefined ? drive.maxActiveBacklogs : (drive.maxBacklogs || 0), 10);
 
     if (studentCgpa < parseFloat(drive.minCgpa)) {
       isEligible = false;
       eligibilityReason = `Requires CGPA ≥ ${drive.minCgpa} — your CGPA is ${studentCgpa.toFixed(2)}`;
-    } else if (studentBacklogs > parseInt(drive.maxBacklogs, 10)) {
+    } else if (studentBacklogs > maxBacklogs) {
       isEligible = false;
-      eligibilityReason = `Max backlogs allowed is ${drive.maxBacklogs} — you have ${studentBacklogs}`;
-    } else if (!drive.allowedBranches.includes(studentBranch)) {
+      eligibilityReason = `Max backlogs allowed is ${maxBacklogs} — you have ${studentBacklogs}`;
+    } else if (!isBranchEligible(allowedBranches, studentBranch)) {
       isEligible = false;
-      eligibilityReason = `Allowed branches: ${drive.allowedBranches.join(', ')} — your branch is ${studentBranch}`;
+      eligibilityReason = `Allowed branches: ${allowedBranches.join(', ')} — your branch is ${studentBranch}`;
     }
   }
 
@@ -133,6 +143,27 @@ export function DriveDetailPage() {
       <div className="space-y-6">
         <Skeleton className="h-40 w-full rounded-xl" />
         <Skeleton className="h-64 w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  if (!drive) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Link
+            to="/drives"
+            className="inline-flex items-center space-x-2 text-xs font-semibold text-text-secondary hover:text-primary-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Placement Drives</span>
+          </Link>
+        </div>
+        <EmptyState
+          title="Placement Drive Not Found"
+          description="The requested placement drive could not be located in the database."
+          icon={Briefcase}
+        />
       </div>
     );
   }

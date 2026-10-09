@@ -18,9 +18,12 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
+import { useToast } from '../../components/ui/Toast';
+
 export function DrivesListPage() {
   const { user, role } = useAuth();
   const queryClient = useQueryClient();
+  const { addToast } = useToast();
   const isStudent = role === 'student';
   const isOfficer = role === 'tpo' || role === 'officer';
 
@@ -36,7 +39,7 @@ export function DrivesListPage() {
       try {
         return await getDrivesApi();
       } catch (err) {
-        console.warn('Drives fetch error, using fallback:', err);
+        console.warn('Drives fetch error:', err);
         return null;
       }
     },
@@ -48,14 +51,18 @@ export function DrivesListPage() {
       setApplyingDriveId(driveId);
       return await applyToDriveApi(driveId);
     },
-    onSuccess: () => {
+    onSuccess: (res, driveId) => {
       queryClient.invalidateQueries({ queryKey: ['drivesList'] });
+      queryClient.invalidateQueries({ queryKey: ['applicationsList'] });
+      queryClient.invalidateQueries({ queryKey: ['studentAnalytics'] });
+      queryClient.invalidateQueries({ queryKey: ['driveDetail'] });
       setApplyingDriveId(null);
-      alert('Application submitted successfully!');
+      addToast('Application submitted successfully! T&P Cell has received your submission.', 'success');
     },
     onError: (err) => {
       setApplyingDriveId(null);
-      alert(err?.response?.data?.message || 'Application submitted successfully! (Demo mode)');
+      const msg = err?.response?.data?.message || err?.message || 'Unable to submit application.';
+      addToast(msg, 'error');
     },
   });
 
@@ -63,47 +70,8 @@ export function DrivesListPage() {
     applyMutation.mutate(driveId);
   };
 
-  // Mock Drives fallback for dev testing
-  const fallbackDrives = [
-    {
-      id: 1,
-      companyName: 'Tata Consultancy Services (TCS)',
-      jobTitle: 'Software Engineer (Ninja / Digital)',
-      role: 'Software Engineer (Ninja / Digital)',
-      salaryPackage: '7.50 LPA',
-      ctc: '7.50',
-      companyType: 'IT Services',
-      minCgpa: 6.5,
-      maxBacklogs: 0,
-      allowedBranches: ['Computer Engineering', 'Information Technology', 'AI&DS', 'ENTC'],
-      minSemester: 6,
-      deadline: '2026-11-15',
-      status: 'ONGOING',
-      applicantCount: 6,
-      hasApplied: false,
-    },
-    {
-      id: 2,
-      companyName: 'Infosys Limited',
-      jobTitle: 'Specialist Programmer',
-      role: 'Specialist Programmer',
-      salaryPackage: '9.50 LPA',
-      ctc: '9.50',
-      companyType: 'Product & Consulting',
-      minCgpa: 7.5,
-      maxBacklogs: 0,
-      allowedBranches: ['Computer Engineering', 'Information Technology'],
-      minSemester: 6,
-      deadline: '2026-11-20',
-      status: 'ONGOING',
-      applicantCount: 3,
-      hasApplied: true,
-      applicationStatus: 'Shortlisted',
-    },
-  ];
-
-  const apiDrives = data?.data || (Array.isArray(data) ? data : data?.drives);
-  const rawDrives = Array.isArray(apiDrives) ? apiDrives : fallbackDrives;
+  const apiDrives = data?.data || (Array.isArray(data) ? data : data?.drives) || [];
+  const rawDrives = Array.isArray(apiDrives) ? apiDrives : [];
 
   // Filter for student tabs if student role
   const filteredDrives = rawDrives.filter((d) => {

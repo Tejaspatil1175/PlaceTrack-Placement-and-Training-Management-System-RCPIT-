@@ -8,7 +8,15 @@ const { sendStatusUpdateEmail } = require('../services/emailService');
  */
 const applyToDrive = async (req, res, next) => {
   try {
-    const driveId = req.params.id || req.params.driveId || req.body.driveId;
+    const rawDriveId = req.params.id || req.params.driveId || req.body?.driveId;
+    const driveId = parseInt(rawDriveId, 10);
+
+    if (!driveId || isNaN(driveId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid placement drive ID specified'
+      });
+    }
 
     // 1. Fetch student profile
     const studentProfile = await StudentProfile.findOne({
@@ -22,7 +30,7 @@ const applyToDrive = async (req, res, next) => {
       });
     }
 
-    // 2. Check resume
+    // 2. Ensure resume link is present
     if (!studentProfile.resumeUrl) {
       return res.status(400).json({
         success: false,
@@ -44,7 +52,7 @@ const applyToDrive = async (req, res, next) => {
     if (!eligibility.isEligible) {
       return res.status(400).json({
         success: false,
-        message: 'You are not eligible to apply for this drive',
+        message: 'You are not eligible to apply for this drive: ' + eligibility.reasons.join(', '),
         errors: eligibility.reasons
       });
     }
@@ -70,7 +78,7 @@ const applyToDrive = async (req, res, next) => {
       driveId: drive.id,
       status: 'APPLIED',
       appliedAt: new Date(),
-      notes: req.body.notes || null
+      notes: req.body?.notes || null
     });
 
     return res.status(201).json({
@@ -110,10 +118,126 @@ const getMyApplications = async (req, res, next) => {
       order: [['appliedAt', 'DESC']]
     });
 
+    const formatted = applications.map((app) => {
+      const appJson = app.toJSON ? app.toJSON() : { ...app };
+      return {
+        id: appJson.id,
+        studentId: appJson.studentId,
+        driveId: appJson.driveId,
+        companyName: appJson.drive?.companyName || 'Campus Placement',
+        jobTitle: appJson.drive?.role || 'Software Engineer',
+        ctc: appJson.drive?.ctc ? `${appJson.drive.ctc} LPA` : 'Competitive',
+        appliedAt: appJson.appliedAt ? new Date(appJson.appliedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        updatedAt: appJson.updatedAt ? new Date(appJson.updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        status: appJson.status,
+        notes: appJson.notes,
+        remarks: appJson.notes,
+        drive: appJson.drive
+      };
+    });
+
     return res.status(200).json({
       success: true,
       message: 'Applications retrieved successfully',
-      data: applications
+      data: formatted
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get single application by ID with authorization checks
+ */
+const getApplicationById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { Department } = require('../models');
+
+    const application = await Application.findByPk(id, {
+      include: [
+        {
+          model: Drive,
+          as: 'drive'
+        },
+        {
+          model: StudentProfile,
+          as: 'studentProfile',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'prn', 'name', 'email', 'phone', 'gender', 'category', 'departmentId'],
+              include: [
+                {
+                  model: Department,
+                  as: 'department',
+                  attributes: ['id', 'name']
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found'
+      });
+    }
+
+    // Role-based access control
+    if (req.user.role === 'student') {
+      if (application.studentProfile?.userId !== req.user.id) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied: You can only view your own applications'
+        });
+      }
+    } else if (req.user.role === 'coordinator') {
+      const studentDeptId = application.studentProfile?.user?.departmentId;
+      if (req.user.departmentId && studentDeptId !== req.user.departmentId) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied: Application is outside your department scope'
+        });
+      }
+    }
+
+    const appJson = application.toJSON ? application.toJSON() : { ...application };
+    const user = appJson.studentProfile?.user;
+
+    const formatted = {
+      id: appJson.id,
+      studentId: appJson.studentId,
+      studentName: user?.name || 'Student',
+      prn: user?.prn || 'PRN',
+      email: user?.email,
+      phone: user?.phone,
+      department: user?.department?.name || appJson.studentProfile?.branch || 'Engineering',
+      branch: appJson.studentProfile?.branch,
+      cgpa: appJson.studentProfile?.cgpa,
+      activeBacklogs: appJson.studentProfile?.activeBacklogs,
+      driveId: appJson.driveId,
+      companyName: appJson.drive?.companyName || 'Campus Placement',
+      jobTitle: appJson.drive?.role || 'Software Engineer',
+      ctc: appJson.drive?.ctc ? `${appJson.drive.ctc} LPA` : 'Competitive',
+      appliedAt: appJson.appliedAt ? new Date(appJson.appliedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      updatedAt: appJson.updatedAt ? new Date(appJson.updatedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      status: appJson.status,
+      notes: appJson.notes,
+      remarks: appJson.notes,
+      resumeUrl: appJson.studentProfile?.resumeUrl,
+      drive: appJson.drive,
+      studentProfile: appJson.studentProfile
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: 'Application details retrieved successfully',
+      data: formatted
     });
   } catch (error) {
     return next(error);
@@ -425,6 +549,7 @@ const listApplications = async (req, res, next) => {
 module.exports = {
   applyToDrive,
   getMyApplications,
+  getApplicationById,
   updateApplicationStatus,
   bulkUpdateApplicationStatus,
   getDriveApplications,

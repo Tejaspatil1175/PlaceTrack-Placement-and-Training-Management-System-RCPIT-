@@ -57,4 +57,11 @@ router.get(
   applicationController.getDriveApplications
 );
 
+// GET /api/applications/:id (Authenticated)
+router.get(
+  '/:id',
+  authenticate,
+  applicationController.getApplicationById
+);
+
 module.exports = router;

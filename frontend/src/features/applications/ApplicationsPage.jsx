@@ -73,72 +73,25 @@ export function ApplicationsPage() {
     },
   });
 
-  // Fallback Mock Applications
-  const fallbackApplications = [
-    {
-      id: 1,
-      studentId: 101,
-      studentName: 'Rahul Ramesh Sharma',
-      prn: '2021012345',
-      department: 'Computer',
-      driveId: 1,
-      companyName: 'Tata Consultancy Services',
-      jobTitle: 'Software Developer',
-      ctc: '7.0 LPA',
-      appliedAt: '2026-09-12',
-      updatedAt: '2026-09-14',
-      status: 'Shortlisted',
-      remarks: 'Selected for Round 1 Technical Interview.',
-    },
-    {
-      id: 2,
-      studentId: 102,
-      studentName: 'Priya Suresh Patel',
-      prn: '2021012346',
-      department: 'IT',
-      driveId: 2,
-      companyName: 'Infosys Limited',
-      jobTitle: 'System Engineer',
-      ctc: '6.5 LPA',
-      appliedAt: '2026-09-14',
-      updatedAt: '2026-09-15',
-      status: 'Selected',
-      remarks: 'Offer letter issued by HR.',
-    },
-    {
-      id: 3,
-      studentId: 103,
-      studentName: 'Amit Vikram Singh',
-      prn: '2021012347',
-      department: 'AI&DS',
-      driveId: 1,
-      companyName: 'Tata Consultancy Services',
-      jobTitle: 'Software Developer',
-      ctc: '7.0 LPA',
-      appliedAt: '2026-09-13',
-      updatedAt: '2026-09-13',
-      status: 'Applied',
-      remarks: 'Application under review.',
-    },
-    {
-      id: 4,
-      studentId: 104,
-      studentName: 'Neha Rajesh Deshmukh',
-      prn: '2021012348',
-      department: 'Computer',
-      driveId: 3,
-      companyName: 'Capgemini',
-      jobTitle: 'Analyst',
-      ctc: '5.5 LPA',
-      appliedAt: '2026-08-20',
-      updatedAt: '2026-08-25',
-      status: 'Rejected',
-      remarks: 'Did not meet minimum CGPA cutoff.',
-    },
-  ];
+  const apiApplications = data?.data || (Array.isArray(data) ? data : data?.applications) || [];
+  const rawApplications = Array.isArray(apiApplications) ? apiApplications.map((app) => ({
+    id: app.id,
+    studentId: app.studentId,
+    studentName: app.studentName || app.studentProfile?.user?.name || user?.name || 'Student',
+    prn: app.prn || app.studentProfile?.user?.prn || user?.prn || '',
+    department: app.department || app.studentProfile?.user?.department?.name || app.studentProfile?.branch || '',
+    driveId: app.driveId,
+    companyName: app.companyName || app.drive?.companyName || 'Placement Drive',
+    jobTitle: app.jobTitle || app.drive?.role || 'Job Role',
+    ctc: app.ctc || (app.drive?.ctc ? `${app.drive.ctc} LPA` : 'Competitive'),
+    appliedAt: app.appliedAt ? new Date(app.appliedAt).toISOString().split('T')[0] : (app.createdAt ? new Date(app.createdAt).toISOString().split('T')[0] : 'N/A'),
+    updatedAt: app.updatedAt ? new Date(app.updatedAt).toISOString().split('T')[0] : '',
+    status: app.status || 'APPLIED',
+    remarks: app.notes || app.remarks || '',
+    drive: app.drive
+  })) : [];
 
-  const apiApplications = data?.data || (Array.isArray(data) ? data : data?.applications);
-  const rawApplications = Array.isArray(apiApplications) ? apiApplications : fallbackApplications;
+  const uniqueDriveOptions = Array.from(new Set(rawApplications.map((a) => a.companyName).filter(Boolean)));
 
   // Filter application rows
   const filteredApplications = rawApplications.filter((app) => {
@@ -266,9 +219,11 @@ export function ApplicationsPage() {
                   className="w-full py-2 px-3 bg-bg-base border border-border-subtle rounded-lg text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">All Placement Drives</option>
-                  <option value="Tata Consultancy Services">Tata Consultancy Services</option>
-                  <option value="Infosys Limited">Infosys Limited</option>
-                  <option value="Capgemini">Capgemini</option>
+                  {uniqueDriveOptions.map((comp) => (
+                    <option key={comp} value={comp}>
+                      {comp}
+                    </option>
+                  ))}
                 </select>
               </div>
 

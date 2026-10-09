@@ -1,3 +1,5 @@
+import apiClient from './client';
+
 /**
  * Get all applications (TPO / Coordinator: all across college, Student: self)
  */
@@ -59,3 +61,12 @@ export const bulkUpdateApplicationStatusApi = async (data) => {
   const response = await apiClient.post('/applications/bulk-status', data);
   return response.data;
 };
+
+/**
+ * Get detailed application by ID
+ */
+export const getApplicationByIdApi = async (id) => {
+  const response = await apiClient.get(`/applications/${id}`);
+  return response.data;
+};
+

@@ -11,6 +11,36 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
+const BRANCH_ALIASES = {
+  computer: ['computer engineering', 'computer', 'cs', 'cse', 'comp'],
+  'computer engineering': ['computer engineering', 'computer', 'cs', 'cse', 'comp'],
+  it: ['information technology', 'it'],
+  'information technology': ['information technology', 'it'],
+  'ai&ds': ['artificial intelligence and data science', 'ai&ds', 'ai & ds', 'aids', 'data science'],
+  'ai & ds': ['artificial intelligence and data science', 'ai&ds', 'ai & ds', 'aids', 'data science'],
+  entc: ['electronics and telecommunication engineering', 'entc', 'e&tc', 'telecommunication', 'electronics'],
+  'e&tc': ['electronics and telecommunication engineering', 'entc', 'e&tc', 'telecommunication', 'electronics'],
+  'electronics and telecommunication engineering': ['electronics and telecommunication engineering', 'entc', 'e&tc'],
+  mechanical: ['mechanical engineering', 'mechanical', 'mech'],
+  'mechanical engineering': ['mechanical engineering', 'mechanical', 'mech'],
+  civil: ['civil engineering', 'civil'],
+  'civil engineering': ['civil engineering', 'civil'],
+  electrical: ['electrical engineering', 'electrical'],
+  'electrical engineering': ['electrical engineering', 'electrical'],
+};
+
+function isBranchEligible(allowedBranches, studentBranch) {
+  if (!allowedBranches || allowedBranches.length === 0) return true;
+  if (!studentBranch) return true;
+  const sLower = studentBranch.toLowerCase().trim();
+  return allowedBranches.some((b) => {
+    const bLower = (b || '').toLowerCase().trim();
+    if (bLower === sLower || bLower.includes(sLower) || sLower.includes(bLower)) return true;
+    const aliases = BRANCH_ALIASES[bLower] || BRANCH_ALIASES[sLower] || [];
+    return aliases.some((a) => a === sLower || a === bLower || sLower.includes(a) || bLower.includes(a));
+  });
+}
+
 export function DriveCard({
   drive,
   user,
@@ -21,22 +51,26 @@ export function DriveCard({
   const isStudent = role === 'student';
   const isOfficer = role === 'tpo' || role === 'officer';
 
-  // Calculate student eligibility status if role === student
-  let isEligible = true;
-  let eligibilityReason = '';
   let alreadyApplied = Boolean(drive.hasApplied);
   let applicationStatus = drive.applicationStatus || 'Applied';
 
-  if (isStudent && user) {
+  // Primary source of truth: backend evaluated eligibility
+  let isEligible = drive.isEligible !== undefined ? drive.isEligible : true;
+  let eligibilityReason = Array.isArray(drive.eligibilityReasons)
+    ? drive.eligibilityReasons.join(', ')
+    : (typeof drive.eligibilityReasons === 'string' ? drive.eligibilityReasons : '');
+
+  // Fallback client-side calculation if backend property was not provided
+  if (isStudent && user && drive.isEligible === undefined) {
     const studentCgpa = parseFloat(user.cgpa || user.studentProfile?.cgpa || 8.75);
     const studentBacklogs = user.activeBacklogs || user.studentProfile?.activeBacklogs || 0;
-    const studentBranch = user.branch || user.studentProfile?.branch || 'Computer';
+    const studentBranch = user.branch || user.studentProfile?.branch || user.departmentName || 'Computer';
     const studentSem = user.currentSemester || user.studentProfile?.currentSemester || 7;
 
     const minCgpa = parseFloat(drive.minCgpa || 6.5);
-    const maxBacklogs = parseInt(drive.maxBacklogs || 0, 10);
-    const allowedBranches = drive.allowedBranches || ['Computer', 'IT', 'AI&DS'];
-    const minSem = parseInt(drive.minSemester || 7, 10);
+    const maxBacklogs = parseInt(drive.maxActiveBacklogs !== undefined ? drive.maxActiveBacklogs : (drive.maxBacklogs || 0), 10);
+    const allowedBranches = Array.isArray(drive.allowedBranches) ? drive.allowedBranches : ['Computer Engineering', 'Information Technology', 'AI&DS'];
+    const minSem = parseInt(drive.minSemester || 6, 10);
 
     if (studentCgpa < minCgpa) {
       isEligible = false;
@@ -44,7 +78,7 @@ export function DriveCard({
     } else if (studentBacklogs > maxBacklogs) {
       isEligible = false;
       eligibilityReason = `Max backlogs allowed: ${maxBacklogs} — yours: ${studentBacklogs}`;
-    } else if (!allowedBranches.includes(studentBranch)) {
+    } else if (!isBranchEligible(allowedBranches, studentBranch)) {
       isEligible = false;
       eligibilityReason = `Allowed branches: ${allowedBranches.join(', ')} — your branch: ${studentBranch}`;
     } else if (studentSem < minSem) {
