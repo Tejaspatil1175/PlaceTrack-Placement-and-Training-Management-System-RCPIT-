@@ -90,8 +90,9 @@ const NAV_ITEMS = [
     path: '/upload-logs',
     label: 'Upload Logs',
     icon: History,
-    roles: ['tpo'],
+    roles: ['tpo', 'coordinator'],
   },
+
   {
     path: '/profile',
     label: 'My Profile',
