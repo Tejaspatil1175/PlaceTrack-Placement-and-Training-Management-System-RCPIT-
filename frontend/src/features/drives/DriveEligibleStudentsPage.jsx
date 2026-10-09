@@ -5,6 +5,8 @@ import { getEligibleStudentsApi, getDriveByIdApi } from '../../api/drives';
 import { StatusBadge } from '../students/StatusBadge';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
   Users,
   Download,
@@ -13,6 +15,7 @@ import {
   AlertCircle,
   Building2,
   CheckCircle2,
+  FileText,
 } from 'lucide-react';
 
 export function DriveEligibleStudentsPage() {
@@ -70,6 +73,123 @@ export function DriveEligibleStudentsPage() {
     document.body.removeChild(link);
   };
 
+  const handleExportPdf = () => {
+    if (students.length === 0) return;
+
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const companyName = drive.companyName || 'Placement Drive';
+    const jobRole = drive.role || drive.jobTitle || 'Software Engineer';
+    const pkg = drive.ctc ? `${drive.ctc} LPA` : drive.salaryPackage || 'Competitive';
+    const minCgpa = drive.minCgpa ?? 'N/A';
+    const maxBacklogs = drive.maxBacklogs ?? 0;
+    const branches = Array.isArray(drive.eligibleBranches || drive.allowedBranches)
+      ? (drive.eligibleBranches || drive.allowedBranches).join(', ')
+      : drive.eligibleBranches || drive.allowedBranches || 'All Branches';
+
+    // 1. Institutional Header
+    doc.setFillColor(28, 63, 99); // Navy blue
+    doc.rect(0, 0, 210, 24, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('R. C. Patel Institute of Technology, Shirpur', 14, 11);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(220, 230, 242);
+    doc.text('Training & Placement Cell • Auto-Matched Eligibility Roster', 14, 18);
+
+    // Accent gold line
+    doc.setFillColor(184, 134, 46);
+    doc.rect(0, 24, 210, 2, 'F');
+
+    // 2. Drive Overview Meta Box
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(14, 31, 182, 32, 2, 2, 'FD');
+
+    doc.setTextColor(28, 63, 99);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text(`${companyName}`, 18, 38);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Role: ${jobRole}   |   Package: ${pkg}`, 18, 44);
+    doc.text(`Matched Criteria: Min CGPA ≥ ${minCgpa}   |   Max Backlogs: ${maxBacklogs}`, 18, 50);
+    doc.text(`Eligible Branches: ${branches.length > 70 ? branches.slice(0, 67) + '...' : branches}`, 18, 56);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(22, 101, 52); // Green
+    doc.text(`Qualified Students: ${students.length}`, 150, 38);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 150, 44);
+
+    // 3. AutoTable Data Table
+    const tableHeaders = [['#', 'PRN', 'Candidate Name', 'Branch', 'CGPA', 'Backlogs', 'Status']];
+    const tableData = students.map((s, idx) => [
+      idx + 1,
+      s.prn,
+      s.name,
+      s.branch,
+      s.cgpa,
+      `${s.backlogs} Backlog${s.backlogs === 1 ? '' : 's'}`,
+      s.status,
+    ]);
+
+    autoTable(doc, {
+      head: tableHeaders,
+      body: tableData,
+      startY: 68,
+      margin: { left: 14, right: 14 },
+      headStyles: {
+        fillColor: [28, 63, 99],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 9,
+        halign: 'left',
+      },
+      bodyStyles: {
+        fontSize: 8.5,
+        textColor: [30, 41, 59],
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252],
+      },
+      columnStyles: {
+        0: { cellWidth: 10, halign: 'center' },
+        1: { cellWidth: 28, fontStyle: 'bold' },
+        2: { cellWidth: 50 },
+        3: { cellWidth: 35 },
+        4: { cellWidth: 18, halign: 'center', fontStyle: 'bold' },
+        5: { cellWidth: 22, halign: 'center' },
+        6: { cellWidth: 19, halign: 'center' },
+      },
+      didDrawPage: (data) => {
+        // Footer on every page
+        const pageCount = doc.internal.getNumberOfPages();
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text(
+          `PlaceTrack RCPIT Institutional Placement Record • Confidential • Page ${data.pageNumber} of ${pageCount}`,
+          14,
+          290
+        );
+      },
+    });
+
+    doc.save(`Eligible_Students_${companyName.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Back Link */}
@@ -98,15 +218,28 @@ export function DriveEligibleStudentsPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleExportCsv}
-          disabled={students.length === 0}
-          className="px-4 py-2.5 bg-accent-500 hover:bg-accent-500/90 disabled:opacity-50 text-white font-heading font-bold text-xs rounded-lg shadow-sm inline-flex items-center space-x-2 shrink-0 transition-all"
-        >
-          <Download className="w-4 h-4" />
-          <span>Export List to CSV</span>
-        </button>
+        {/* Export Actions (PDF & CSV) */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            disabled={students.length === 0}
+            className="px-4 py-2.5 bg-accent-500 hover:bg-accent-500/90 disabled:opacity-50 text-white font-heading font-bold text-xs rounded-lg shadow-sm inline-flex items-center space-x-2 shrink-0 transition-all cursor-pointer"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Export Official PDF</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={students.length === 0}
+            className="px-3.5 py-2.5 bg-primary-700 hover:bg-primary-800 disabled:opacity-50 text-white font-heading font-semibold text-xs rounded-lg border border-primary-500 shadow-sm inline-flex items-center space-x-2 shrink-0 transition-all cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>CSV</span>
+          </button>
+        </div>
       </div>
 
       {/* Criteria Summary Card */}
