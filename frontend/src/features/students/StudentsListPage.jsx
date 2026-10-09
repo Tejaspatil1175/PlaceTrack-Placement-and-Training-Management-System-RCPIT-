@@ -24,8 +24,8 @@ export function StudentsListPage() {
 
   const [selectedStudent, setSelectedStudent] = useState(null);
 
-  // TanStack Query to fetch student data
-  const { data, isLoading } = useQuery({
+  // TanStack Query to fetch student data from backend API
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['studentsList', filters, user?.departmentId],
     queryFn: async () => {
       try {
@@ -33,14 +33,21 @@ export function StudentsListPage() {
         if (!isTpo && user?.departmentId) {
           queryParams.departmentId = user.departmentId;
         }
+        // Remove empty filters
+        Object.keys(queryParams).forEach((k) => {
+          if (queryParams[k] === '' || queryParams[k] === null || queryParams[k] === undefined) {
+            delete queryParams[k];
+          }
+        });
         return await getStudentsApi(queryParams);
       } catch (err) {
+        console.warn('Students fetch error, using fallback:', err);
         return null;
       }
     },
   });
 
-  // Mock student records fallback for dev testing
+  // Mock student records fallback if API is unreachable
   const fallbackStudents = [
     {
       id: 1,
@@ -49,7 +56,7 @@ export function StudentsListPage() {
       email: 'rahul.sharma@rcpit.ac.in',
       phone: '9876543210',
       placementStatus: 'Shortlisted',
-      studentProfile: { branch: 'Computer', division: 'A', admissionYear: 2021, currentSemester: 7, cgpa: 8.75, activeBacklogs: 0 },
+      studentProfile: { branch: 'Computer Engineering', division: 'A', admissionYear: 2021, currentSemester: 7, cgpa: 8.75, activeBacklogs: 0 },
     },
     {
       id: 2,
@@ -58,7 +65,7 @@ export function StudentsListPage() {
       email: 'priya.patel@rcpit.ac.in',
       phone: '9876543211',
       placementStatus: 'Placed',
-      studentProfile: { branch: 'IT', division: 'B', admissionYear: 2021, currentSemester: 7, cgpa: 9.12, activeBacklogs: 0 },
+      studentProfile: { branch: 'Information Technology', division: 'B', admissionYear: 2021, currentSemester: 7, cgpa: 9.12, activeBacklogs: 0 },
     },
     {
       id: 3,
@@ -67,7 +74,7 @@ export function StudentsListPage() {
       email: 'amit.singh@rcpit.ac.in',
       phone: '9876543212',
       placementStatus: 'Unplaced',
-      studentProfile: { branch: 'AI&DS', division: 'A', admissionYear: 2021, currentSemester: 7, cgpa: 7.20, activeBacklogs: 1 },
+      studentProfile: { branch: 'Artificial Intelligence and Data Science', division: 'A', admissionYear: 2021, currentSemester: 7, cgpa: 7.20, activeBacklogs: 1 },
     },
     {
       id: 4,
@@ -76,7 +83,7 @@ export function StudentsListPage() {
       email: 'neha.deshmukh@rcpit.ac.in',
       phone: '9876543213',
       placementStatus: 'Placed',
-      studentProfile: { branch: 'Computer', division: 'B', admissionYear: 2021, currentSemester: 7, cgpa: 8.90, activeBacklogs: 0 },
+      studentProfile: { branch: 'Computer Engineering', division: 'B', admissionYear: 2021, currentSemester: 7, cgpa: 8.90, activeBacklogs: 0 },
     },
     {
       id: 5,
@@ -85,33 +92,33 @@ export function StudentsListPage() {
       email: 'sanket.patil@rcpit.ac.in',
       phone: '9876543214',
       placementStatus: 'Unplaced',
-      studentProfile: { branch: 'ENTC', division: 'A', admissionYear: 2021, currentSemester: 7, cgpa: 6.45, activeBacklogs: 2 },
+      studentProfile: { branch: 'Electronics and Telecommunication Engineering', division: 'A', admissionYear: 2021, currentSemester: 7, cgpa: 6.45, activeBacklogs: 2 },
     },
   ];
 
-  const studentsList =
-    data?.data?.students ||
-    data?.students ||
-    (Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : fallbackStudents));
+  const apiStudents = data?.data?.students || data?.students;
+  const isUsingApi = Array.isArray(apiStudents);
 
-
-  // Filter apply client-side if needed
-  const filteredStudents = studentsList.filter((s) => {
-    const prof = s.studentProfile || {};
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      const matchName = s.name?.toLowerCase().includes(q);
-      const matchPrn = s.prn?.toLowerCase().includes(q);
-      if (!matchName && !matchPrn) return false;
-    }
-    if (filters.department && prof.branch !== filters.department) return false;
-    if (filters.branch && prof.branch !== filters.branch) return false;
-    if (filters.admissionYear && String(prof.admissionYear) !== filters.admissionYear) return false;
-    if (filters.cgpaMin && parseFloat(prof.cgpa || 0) < parseFloat(filters.cgpaMin)) return false;
-    if (filters.backlogStatus && String(prof.activeBacklogs || 0) !== filters.backlogStatus) return false;
-    if (filters.placementStatus && (s.placementStatus || 'Unplaced') !== filters.placementStatus) return false;
-    return true;
-  });
+  // When live API is active, server performs multi-parameter filtering across all departments.
+  // When offline/fallback, use client-side fuzzy filter.
+  const filteredStudents = isUsingApi
+    ? apiStudents
+    : fallbackStudents.filter((s) => {
+        const prof = s.studentProfile || {};
+        if (filters.search) {
+          const q = filters.search.toLowerCase();
+          const matchName = s.name?.toLowerCase().includes(q);
+          const matchPrn = s.prn?.toLowerCase().includes(q);
+          if (!matchName && !matchPrn) return false;
+        }
+        if (filters.department && !prof.branch?.toLowerCase().includes(filters.department.toLowerCase())) return false;
+        if (filters.branch && !prof.branch?.toLowerCase().includes(filters.branch.toLowerCase())) return false;
+        if (filters.admissionYear && String(prof.admissionYear) !== filters.admissionYear) return false;
+        if (filters.cgpaMin && parseFloat(prof.cgpa || 0) < parseFloat(filters.cgpaMin)) return false;
+        if (filters.backlogStatus && String(prof.activeBacklogs || 0) !== filters.backlogStatus) return false;
+        if (filters.placementStatus && (s.placementStatus || 'Unplaced') !== filters.placementStatus) return false;
+        return true;
+      });
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));

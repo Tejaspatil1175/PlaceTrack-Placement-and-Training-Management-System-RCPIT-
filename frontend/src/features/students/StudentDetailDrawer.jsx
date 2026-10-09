@@ -22,20 +22,17 @@ export function StudentDetailDrawer({ student, onClose }) {
   if (!student) return null;
 
   const profile = student.studentProfile || {};
-  const semesterRecords = student.semesterRecords || [
-    { semesterNumber: 1, sgpa: '8.40', credits: 22, newBacklogs: 0, clearedBacklogs: 0 },
-    { semesterNumber: 2, sgpa: '8.60', credits: 24, newBacklogs: 0, clearedBacklogs: 0 },
-    { semesterNumber: 3, sgpa: '8.80', credits: 22, newBacklogs: 0, clearedBacklogs: 0 },
-    { semesterNumber: 4, sgpa: '8.90', credits: 24, newBacklogs: 0, clearedBacklogs: 0 },
-    { semesterNumber: 5, sgpa: '9.00', credits: 22, newBacklogs: 0, clearedBacklogs: 0 },
-    { semesterNumber: 6, sgpa: '8.80', credits: 22, newBacklogs: 0, clearedBacklogs: 0 },
-  ];
+  const semesterRecords = (student.semesterRecords && student.semesterRecords.length > 0)
+    ? student.semesterRecords
+    : (profile.semesterRecords && profile.semesterRecords.length > 0)
+      ? profile.semesterRecords
+      : [];
 
-  const applications = student.applications || [
-    { id: 1, company: 'Tata Consultancy Services', role: 'Software Developer', ctc: '7.0 LPA', status: 'Shortlisted', date: '2026-09-12' },
-    { id: 2, company: 'Infosys Limited', role: 'System Engineer', ctc: '6.5 LPA', status: 'Applied', date: '2026-09-14' },
-    { id: 3, company: 'Capgemini', role: 'Analyst', ctc: '5.5 LPA', status: 'Rejected', date: '2026-08-20' },
-  ];
+  const applications = (student.applications && student.applications.length > 0)
+    ? student.applications
+    : (profile.applications && profile.applications.length > 0)
+      ? profile.applications
+      : [];
 
   const resumeUrl = profile.resumeUrl || 'https://res.cloudinary.com/demo/image/upload/v1/sample_resume.pdf';
 
@@ -176,46 +173,70 @@ export function StudentDetailDrawer({ student, onClose }) {
           {/* 2. Academic History Tab */}
           {activeTab === 'academics' && (
             <div className="space-y-4">
-              <div className="overflow-x-auto border border-border-subtle rounded-lg">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="bg-bg-base border-b border-border-subtle text-text-muted font-bold uppercase">
-                      <th className="py-2.5 px-3">Semester</th>
-                      <th className="py-2.5 px-3">SGPA</th>
-                      <th className="py-2.5 px-3">Earned Credits</th>
-                      <th className="py-2.5 px-3">New Backlogs</th>
-                      <th className="py-2.5 px-3">Cleared Backlogs</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border-subtle text-text-primary">
-                    {semesterRecords.map((sem) => (
-                      <tr key={sem.semesterNumber} className="hover:bg-bg-base">
-                        <td className="py-2.5 px-3 font-semibold">Semester {sem.semesterNumber}</td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-primary-700">{sem.sgpa}</td>
-                        <td className="py-2.5 px-3 text-text-secondary">{sem.credits}</td>
-                        <td className="py-2.5 px-3 text-error-600 font-semibold">{sem.newBacklogs}</td>
-                        <td className="py-2.5 px-3 text-success-600 font-semibold">{sem.clearedBacklogs}</td>
+              {semesterRecords.length === 0 ? (
+                <div className="text-center py-8 text-text-muted text-xs bg-bg-base rounded-lg border border-border-subtle">
+                  No semester records ingested yet.
+                </div>
+              ) : (
+                <div className="overflow-x-auto border border-border-subtle rounded-lg">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="bg-bg-base border-b border-border-subtle text-text-muted font-bold uppercase">
+                        <th className="py-2.5 px-3">Semester</th>
+                        <th className="py-2.5 px-3">SGPA</th>
+                        <th className="py-2.5 px-3">Earned Credits</th>
+                        <th className="py-2.5 px-3">New Backlogs</th>
+                        <th className="py-2.5 px-3">Cleared Backlogs</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-border-subtle text-text-primary">
+                      {semesterRecords.map((sem) => (
+                        <tr key={sem.semesterNumber} className="hover:bg-bg-base">
+                          <td className="py-2.5 px-3 font-semibold">Semester {sem.semesterNumber}</td>
+                          <td className="py-2.5 px-3 font-mono font-bold text-primary-700">
+                            {sem.sgpa !== undefined ? parseFloat(sem.sgpa).toFixed(2) : '-'}
+                          </td>
+                          <td className="py-2.5 px-3 text-text-secondary">{sem.credits || 0}</td>
+                          <td className="py-2.5 px-3 text-error-600 font-semibold">{sem.newBacklogs || 0}</td>
+                          <td className="py-2.5 px-3 text-success-600 font-semibold">{sem.clearedBacklogs || 0}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
           {/* 3. Applications Tab */}
           {activeTab === 'applications' && (
             <div className="space-y-3">
-              {applications.map((app) => (
-                <div key={app.id} className="p-3.5 bg-bg-base border border-border-subtle rounded-lg flex items-center justify-between">
-                  <div>
-                    <h4 className="font-heading text-xs font-bold text-primary-900">{app.company}</h4>
-                    <p className="text-[11px] text-text-secondary mt-0.5">{app.role} • <span className="font-mono text-accent-500">{app.ctc}</span></p>
-                    <span className="text-[10px] text-text-muted mt-1 block">Applied: {app.date}</span>
-                  </div>
-                  <StatusBadge status={app.status} />
+              {applications.length === 0 ? (
+                <div className="text-center py-8 text-text-muted text-xs bg-bg-base rounded-lg border border-border-subtle">
+                  No placement drive applications recorded yet.
                 </div>
-              ))}
+              ) : (
+                applications.map((app) => (
+                  <div key={app.id} className="p-3.5 bg-bg-base border border-border-subtle rounded-lg flex items-center justify-between">
+                    <div>
+                      <h4 className="font-heading text-xs font-bold text-primary-900">
+                        {app.company || app.drive?.companyName || 'Campus Drive'}
+                      </h4>
+                      <p className="text-[11px] text-text-secondary mt-0.5">
+                        {app.role || app.drive?.role || 'Software Engineer'} •{' '}
+                        <span className="font-mono text-accent-500 font-semibold">
+                          {app.ctc || (app.drive?.ctc ? `${app.drive.ctc} LPA` : '')}
+                        </span>
+                      </p>
+                      <span className="text-[10px] text-text-muted mt-1 block">
+                        Applied:{' '}
+                        {app.date || (app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'Active')}
+                      </span>
+                    </div>
+                    <StatusBadge status={app.status} />
+                  </div>
+                ))
+              )}
             </div>
           )}
 

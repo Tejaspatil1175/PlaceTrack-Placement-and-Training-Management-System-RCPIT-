@@ -82,6 +82,17 @@ export function StudentDetailPage() {
   };
 
   const profile = student.studentProfile || {};
+  const semesterRecords = (student.semesterRecords && student.semesterRecords.length > 0)
+    ? student.semesterRecords
+    : (profile.semesterRecords && profile.semesterRecords.length > 0)
+      ? profile.semesterRecords
+      : [];
+
+  const applications = (student.applications && student.applications.length > 0)
+    ? student.applications
+    : (profile.applications && profile.applications.length > 0)
+      ? profile.applications
+      : [];
 
   return (
     <div className="space-y-6">
@@ -233,15 +244,25 @@ export function StudentDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle text-text-primary">
-                  {(student.semesterRecords || []).map((sem) => (
-                    <tr key={sem.semesterNumber} className="hover:bg-bg-base">
-                      <td className="py-3 px-4 font-semibold">Semester {sem.semesterNumber}</td>
-                      <td className="py-3 px-4 font-mono font-bold text-primary-700">{sem.sgpa}</td>
-                      <td className="py-3 px-4 text-text-secondary">{sem.credits}</td>
-                      <td className="py-3 px-4 text-error-600 font-semibold">{sem.newBacklogs}</td>
-                      <td className="py-3 px-4 text-success-600 font-semibold">{sem.clearedBacklogs}</td>
+                  {semesterRecords.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="py-8 text-center text-text-muted">
+                        No semester records recorded yet.
+                      </td>
                     </tr>
-                  ))}
+                  ) : (
+                    semesterRecords.map((sem) => (
+                      <tr key={sem.semesterNumber} className="hover:bg-bg-base">
+                        <td className="py-3 px-4 font-semibold">Semester {sem.semesterNumber}</td>
+                        <td className="py-3 px-4 font-mono font-bold text-primary-700">
+                          {sem.sgpa !== undefined ? parseFloat(sem.sgpa).toFixed(2) : '-'}
+                        </td>
+                        <td className="py-3 px-4 text-text-secondary">{sem.credits || 0}</td>
+                        <td className="py-3 px-4 text-error-600 font-semibold">{sem.newBacklogs || 0}</td>
+                        <td className="py-3 px-4 text-success-600 font-semibold">{sem.clearedBacklogs || 0}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -253,16 +274,31 @@ export function StudentDetailPage() {
             <h3 className="font-heading text-sm font-semibold text-text-primary uppercase tracking-wider mb-3">
               Placement Drive Applications
             </h3>
-            {(student.applications || []).map((app) => (
-              <div key={app.id} className="p-4 bg-bg-base border border-border-subtle rounded-lg flex items-center justify-between">
-                <div>
-                  <h4 className="font-heading text-xs font-bold text-primary-900">{app.company}</h4>
-                  <p className="text-xs text-text-secondary mt-0.5">{app.role} • <span className="font-mono text-accent-500 font-semibold">{app.ctc}</span></p>
-                  <span className="text-[10px] text-text-muted mt-1 block">Submitted on: {app.date}</span>
-                </div>
-                <StatusBadge status={app.status} />
+            {applications.length === 0 ? (
+              <div className="text-center py-8 text-text-muted text-xs bg-bg-base rounded-lg border border-border-subtle">
+                No placement drive applications recorded yet.
               </div>
-            ))}
+            ) : (
+              applications.map((app) => (
+                <div key={app.id} className="p-4 bg-bg-base border border-border-subtle rounded-lg flex items-center justify-between">
+                  <div>
+                    <h4 className="font-heading text-xs font-bold text-primary-900">
+                      {app.company || app.drive?.companyName || 'Campus Drive'}
+                    </h4>
+                    <p className="text-xs text-text-secondary mt-0.5">
+                      {app.role || app.drive?.role || 'Engineer'} •{' '}
+                      <span className="font-mono text-accent-500 font-semibold">
+                        {app.ctc || (app.drive?.ctc ? `${app.drive.ctc} LPA` : '')}
+                      </span>
+                    </p>
+                    <span className="text-[10px] text-text-muted mt-1 block">
+                      Submitted on: {app.date || (app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'Active')}
+                    </span>
+                  </div>
+                  <StatusBadge status={app.status} />
+                </div>
+              ))
+            )}
           </div>
         )}
 

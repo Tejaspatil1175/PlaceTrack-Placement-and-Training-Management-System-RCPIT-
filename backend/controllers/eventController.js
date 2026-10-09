@@ -54,7 +54,7 @@ const createEvent = async (req, res, next) => {
         {
           model: Department,
           as: 'department',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name']
         }
       ]
     });
@@ -114,7 +114,7 @@ const listEvents = async (req, res, next) => {
         {
           model: Department,
           as: 'department',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name']
         }
       ],
       order: [['date', 'ASC'], ['createdAt', 'DESC']]
@@ -146,7 +146,7 @@ const getEventById = async (req, res, next) => {
         {
           model: Department,
           as: 'department',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name']
         }
       ]
     });

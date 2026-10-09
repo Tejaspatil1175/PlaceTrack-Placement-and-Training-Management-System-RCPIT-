@@ -417,6 +417,25 @@ const updateSemesterRecord = async (req, res, next) => {
   }
 };
 
+const BRANCH_ALIAS_MAP = {
+  computer: ['Computer Engineering', 'Computer'],
+  'computer engineering': ['Computer Engineering', 'Computer'],
+  it: ['Information Technology', 'IT'],
+  'information technology': ['Information Technology', 'IT'],
+  'ai&ds': ['Artificial Intelligence and Data Science', 'AI&DS', 'AI & DS', 'AIDS', 'Data Science'],
+  'ai & ds': ['Artificial Intelligence and Data Science', 'AI&DS', 'AI & DS', 'AIDS', 'Data Science'],
+  'artificial intelligence and data science': ['Artificial Intelligence and Data Science', 'AI&DS'],
+  entc: ['Electronics and Telecommunication Engineering', 'ENTC', 'E&TC', 'Telecommunication'],
+  'e&tc': ['Electronics and Telecommunication Engineering', 'ENTC', 'E&TC', 'Telecommunication'],
+  'electronics and telecommunication engineering': ['Electronics and Telecommunication Engineering', 'ENTC'],
+  mechanical: ['Mechanical Engineering', 'Mechanical'],
+  'mechanical engineering': ['Mechanical Engineering', 'Mechanical'],
+  civil: ['Civil Engineering', 'Civil'],
+  'civil engineering': ['Civil Engineering', 'Civil'],
+  electrical: ['Electrical Engineering', 'Electrical'],
+  'electrical engineering': ['Electrical Engineering', 'Electrical']
+};
+
 /**
  * List all students with filtering, search, and pagination (TPO and Coordinator)
  */
@@ -425,6 +444,7 @@ const listStudents = async (req, res, next) => {
     const {
       search,
       departmentId,
+      department,
       branch,
       admissionYear,
       cgpaMin,
@@ -441,7 +461,7 @@ const listStudents = async (req, res, next) => {
     const offset = (parsedPage - 1) * parsedLimit;
 
     const { Op } = require('sequelize');
-    const { Application } = require('../models');
+    const { Application, SemesterRecord } = require('../models');
 
     const userWhere = { role: 'student' };
     const profileWhere = {};
@@ -449,41 +469,53 @@ const listStudents = async (req, res, next) => {
     // Coordinator can only view students from their assigned department
     if (req.user.role === 'coordinator') {
       userWhere.departmentId = req.user.departmentId;
-    } else if (departmentId) {
+    } else if (departmentId && departmentId !== 'all') {
       userWhere.departmentId = departmentId;
     }
 
     // Search by name, email, or PRN
-    if (search) {
+    if (search && search.trim()) {
+      const q = search.trim();
       userWhere[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { email: { [Op.like]: `%${search}%` } },
-        { prn: { [Op.like]: `%${search}%` } }
+        { name: { [Op.like]: `%${q}%` } },
+        { email: { [Op.like]: `%${q}%` } },
+        { prn: { [Op.like]: `%${q}%` } }
       ];
     }
 
-    // Filter by branch
-    if (branch) {
-      profileWhere.branch = branch;
+    // Filter by branch or department name (supports aliases like IT, ENTC, AI&DS)
+    const rawBranch = (branch || department || '').trim();
+    if (rawBranch && rawBranch.toLowerCase() !== 'all') {
+      const lookup = rawBranch.toLowerCase();
+      const variations = BRANCH_ALIAS_MAP[lookup];
+      if (variations && variations.length > 0) {
+        profileWhere.branch = {
+          [Op.or]: variations.map((v) => ({ [Op.like]: `%${v}%` }))
+        };
+      } else {
+        profileWhere.branch = { [Op.like]: `%${rawBranch}%` };
+      }
     }
 
     // Filter by admissionYear
-    if (admissionYear) {
+    if (admissionYear && admissionYear !== 'all') {
       profileWhere.admissionYear = parseInt(admissionYear, 10);
     }
 
     // Filter by CGPA
     const effectiveMinCgpa = cgpaMin || minCgpa;
-    if (effectiveMinCgpa) {
+    if (effectiveMinCgpa && !isNaN(effectiveMinCgpa)) {
       profileWhere.cgpa = { [Op.gte]: parseFloat(effectiveMinCgpa) };
     }
 
     // Filter by active backlogs
-    if (backlogStatus === 'no_backlogs' || maxBacklogs === '0') {
+    if (backlogStatus === '0' || backlogStatus === 'no_backlogs' || maxBacklogs === '0') {
       profileWhere.activeBacklogs = 0;
     } else if (backlogStatus === 'has_backlogs') {
       profileWhere.activeBacklogs = { [Op.gt]: 0 };
-    } else if (maxBacklogs !== undefined && maxBacklogs !== '') {
+    } else if (backlogStatus !== undefined && backlogStatus !== '' && !isNaN(backlogStatus)) {
+      profileWhere.activeBacklogs = { [Op.lte]: parseInt(backlogStatus, 10) };
+    } else if (maxBacklogs !== undefined && maxBacklogs !== '' && !isNaN(maxBacklogs)) {
       profileWhere.activeBacklogs = { [Op.lte]: parseInt(maxBacklogs, 10) };
     }
 
@@ -494,7 +526,7 @@ const listStudents = async (req, res, next) => {
         {
           model: Department,
           as: 'department',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name']
         },
         {
           model: StudentProfile,
@@ -506,6 +538,10 @@ const listStudents = async (req, res, next) => {
               model: Application,
               as: 'applications',
               attributes: ['id', 'status', 'driveId']
+            },
+            {
+              model: SemesterRecord,
+              as: 'semesterRecords'
             }
           ]
         }
@@ -528,11 +564,13 @@ const listStudents = async (req, res, next) => {
         calculatedPlacementStatus = 'Applied';
       }
       studentJson.placementStatus = calculatedPlacementStatus;
+      studentJson.semesterRecords = studentJson.studentProfile?.semesterRecords || [];
+      studentJson.applications = applications;
       return studentJson;
     });
 
     let finalStudents = formattedStudents;
-    if (placementStatus) {
+    if (placementStatus && placementStatus !== 'all') {
       finalStudents = formattedStudents.filter(
         (s) => s.placementStatus.toLowerCase() === placementStatus.toLowerCase()
       );
@@ -575,7 +613,7 @@ const getStudentById = async (req, res, next) => {
         {
           model: Department,
           as: 'department',
-          attributes: ['id', 'name', 'code']
+          attributes: ['id', 'name']
         },
         {
           model: StudentProfile,
@@ -610,7 +648,7 @@ const getStudentById = async (req, res, next) => {
             {
               model: Department,
               as: 'department',
-              attributes: ['id', 'name', 'code']
+              attributes: ['id', 'name']
             },
             {
               model: StudentProfile,
@@ -664,6 +702,8 @@ const getStudentById = async (req, res, next) => {
       calculatedPlacementStatus = 'Applied';
     }
     userJson.placementStatus = calculatedPlacementStatus;
+    userJson.semesterRecords = userJson.studentProfile?.semesterRecords || [];
+    userJson.applications = applications;
 
     return res.status(200).json({
       success: true,
