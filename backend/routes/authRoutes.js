@@ -3,10 +3,20 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const authenticate = require('../middleware/auth');
 const validate = require('../middleware/validate');
-const { validateLogin, validatePasswordReset } = require('../validators/authValidator');
+const {
+  validateLogin,
+  validatePasswordReset,
+  validateRegister
+} = require('../validators/authValidator');
 
 // POST /api/auth/login
 router.post('/login', validateLogin, validate, authController.login);
+
+// POST /api/auth/register (Self student registration)
+router.post('/register', validateRegister, validate, authController.register);
+
+// GET /api/auth/me (Current authenticated user profile)
+router.get('/me', authenticate, authController.getMe);
 
 // POST /api/auth/first-login-reset (Protected)
 router.post(

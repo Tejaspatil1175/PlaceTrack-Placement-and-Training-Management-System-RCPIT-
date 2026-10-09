@@ -12,7 +12,7 @@ const poolConfig = {
   idle: 10000
 };
 
-const dialectOptions = isRemoteOrCloud
+const dialectOptions = process.env.DB_SSL === 'true'
   ? {
       ssl: {
         require: true,

@@ -10,7 +10,17 @@ export const getMeApi = async () => {
   return response.data;
 };
 
+export const registerApi = async (userData) => {
+  const response = await apiClient.post('/auth/register', userData);
+  return response.data;
+};
+
 export const resetPasswordApi = async (data) => {
   const response = await apiClient.post('/auth/reset-password', data);
+  return response.data;
+};
+
+export const firstLoginResetApi = async (data) => {
+  const response = await apiClient.post('/auth/first-login-reset', data);
   return response.data;
 };

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { loginApi } from '../api/auth';
 import { authStore } from '../store/authStore';
 import { DEMO_CREDENTIALS } from '../config/demoCredentials';
@@ -41,12 +41,16 @@ export function LoginPage() {
     try {
       // 1. Attempt real API call
       const res = await loginApi({
+        identifier: data.identifier,
         email: data.identifier,
         password: data.password,
       });
 
-      if (res && res.token) {
-        authStore.setAuth(res.token, res.user);
+      const token = res?.data?.token || res?.token;
+      const user = res?.data?.user || res?.user;
+
+      if (token && user) {
+        authStore.setAuth(token, user);
         navigate('/dashboard');
         return;
       }
@@ -271,6 +275,19 @@ export function LoginPage() {
                 <span>Sign in to Dashboard</span>
               )}
             </button>
+
+            {/* Student Registration Link */}
+            <div className="text-center pt-2">
+              <p className="text-xs text-text-secondary">
+                New student without credentials?{' '}
+                <Link
+                  to="/register"
+                  className="text-primary-600 hover:text-primary-700 font-semibold underline underline-offset-2"
+                >
+                  Register here
+                </Link>
+              </p>
+            </div>
           </form>
 
           {/* Demo Credentials Helper Panel */}

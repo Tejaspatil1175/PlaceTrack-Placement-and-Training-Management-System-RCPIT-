@@ -4,6 +4,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { AppLayout } from '../components/layout/AppLayout';
 
 import { LoginPage } from '../pages/LoginPage';
+import { RegisterPage } from '../pages/RegisterPage';
 import { ForbiddenPage } from '../pages/ForbiddenPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 
@@ -45,6 +46,7 @@ export function AppRoutes() {
     <Routes>
       {/* Public Unauthenticated Routes */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route path="/403" element={<ForbiddenPage />} />
 
       {/* Root redirect */}

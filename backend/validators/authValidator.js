@@ -40,7 +40,49 @@ const validatePasswordReset = [
     })
 ];
 
+const validateRegister = [
+  body('name')
+    .notEmpty()
+    .withMessage('Name is required')
+    .trim(),
+  body('email')
+    .isEmail()
+    .withMessage('Valid email is required')
+    .normalizeEmail(),
+  body('password')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters long'),
+  body('prn')
+    .optional()
+    .isString()
+    .trim(),
+  body('phone')
+    .optional()
+    .isString()
+    .trim(),
+  body('departmentId')
+    .optional()
+    .isInt()
+    .withMessage('Department ID must be an integer'),
+  body('branch')
+    .optional()
+    .isString()
+    .trim(),
+  body('division')
+    .optional()
+    .isString()
+    .trim(),
+  body('admissionYear')
+    .optional()
+    .isInt(),
+  body('currentSemester')
+    .optional()
+    .isInt({ min: 1, max: 8 })
+    .withMessage('Current semester must be between 1 and 8')
+];
+
 module.exports = {
   validateLogin,
-  validatePasswordReset
+  validatePasswordReset,
+  validateRegister
 };
