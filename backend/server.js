@@ -23,6 +23,7 @@ const driveRoutes = require('./routes/driveRoutes');
 const applicationRoutes = require('./routes/applicationRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const eventRoutes = require('./routes/eventRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 // Error handling middleware
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
@@ -44,6 +45,8 @@ app.use('/api/drives', driveRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/analytics', analyticsRoutes);
+
 
 
 
