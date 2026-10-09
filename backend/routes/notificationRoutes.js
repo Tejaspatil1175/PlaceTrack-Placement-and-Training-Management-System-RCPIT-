@@ -31,13 +31,12 @@ router.get(
 );
 
 /**
- * List all notifications (TPO & Coordinator only)
+ * List all notifications (TPO & Coordinator: admin list, Student: personal/college feed)
  * GET /api/notifications
  */
 router.get(
   '/',
   authenticate,
-  requireRole('tpo', 'coordinator'),
   notificationController.listNotifications
 );
 

@@ -52,6 +52,8 @@ export function StudentAcademicsPage() {
     },
   });
 
+  const isLoading = isMeLoading || isAcademicsLoading;
+
   const payload = academicsData?.data || academicsData || {};
   const rawSemesterRecords = payload.semesterRecords || (Array.isArray(payload) ? payload : []);
   const semesterRecords = Array.isArray(rawSemesterRecords) ? rawSemesterRecords : [];

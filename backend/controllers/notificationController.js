@@ -177,6 +177,11 @@ const getMyNotifications = async (req, res, next) => {
 const listNotifications = async (req, res, next) => {
   try {
     const userRole = req.user.role;
+
+    if (userRole === 'student') {
+      return getMyNotifications(req, res, next);
+    }
+
     const where = {};
 
     if (userRole === 'coordinator') {
