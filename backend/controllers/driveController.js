@@ -174,10 +174,90 @@ const getEligibleStudents = async (req, res, next) => {
   }
 };
 
+/**
+ * Update placement drive (TPO only)
+ */
+const updateDrive = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const drive = await Drive.findByPk(id);
+
+    if (!drive) {
+      return res.status(404).json({
+        success: false,
+        message: 'Placement drive not found'
+      });
+    }
+
+    const {
+      companyName,
+      role,
+      description,
+      ctc,
+      minCgpa,
+      maxActiveBacklogs,
+      allowedBranches,
+      minSemester,
+      deadline,
+      status
+    } = req.body;
+
+    if (companyName !== undefined) drive.companyName = companyName;
+    if (role !== undefined) drive.role = role;
+    if (description !== undefined) drive.description = description;
+    if (ctc !== undefined) drive.ctc = ctc;
+    if (minCgpa !== undefined) drive.minCgpa = minCgpa;
+    if (maxActiveBacklogs !== undefined) drive.maxActiveBacklogs = maxActiveBacklogs;
+    if (allowedBranches !== undefined) drive.allowedBranches = allowedBranches;
+    if (minSemester !== undefined) drive.minSemester = minSemester;
+    if (deadline !== undefined) drive.deadline = deadline;
+    if (status !== undefined) drive.status = status;
+
+    await drive.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Placement drive updated successfully',
+      data: drive
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Delete placement drive (TPO only)
+ */
+const deleteDrive = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const drive = await Drive.findByPk(id);
+
+    if (!drive) {
+      return res.status(404).json({
+        success: false,
+        message: 'Placement drive not found'
+      });
+    }
+
+    await drive.destroy();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Placement drive deleted successfully'
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   createDrive,
   listDrives,
   getDriveById,
-  getEligibleStudents
+  getEligibleStudents,
+  updateDrive,
+  deleteDrive
 };
+
 

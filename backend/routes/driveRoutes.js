@@ -30,6 +30,23 @@ router.get(
   driveController.getDriveById
 );
 
+// PUT /api/drives/:id (TPO only)
+router.put(
+  '/:id',
+  authenticate,
+  requireRole('tpo'),
+  driveController.updateDrive
+);
+
+// DELETE /api/drives/:id (TPO only)
+router.delete(
+  '/:id',
+  authenticate,
+  requireRole('tpo'),
+  driveController.deleteDrive
+);
+
+
 // Step 58: GET /api/drives/:id/eligible-students (TPO & Coordinator only)
 router.get(
   '/:id/eligible-students',
