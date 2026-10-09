@@ -6,8 +6,22 @@ const authenticate = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
 const { uploadExcel, uploadResume } = require('../middleware/upload');
 
+const authController = require('../controllers/authController');
+const validate = require('../middleware/validate');
+const { validateRegister } = require('../validators/authValidator');
+
 // GET /api/students/template (Download official Excel ingestion template)
 router.get('/template', studentUploadController.downloadTemplate);
+
+// POST /api/students (Single student creation by TPO & Coordinator)
+router.post(
+  '/',
+  authenticate,
+  requireRole('tpo', 'coordinator'),
+  validateRegister,
+  validate,
+  authController.register
+);
 
 // POST /api/students/bulk-upload (TPO & Coordinator)
 router.post(

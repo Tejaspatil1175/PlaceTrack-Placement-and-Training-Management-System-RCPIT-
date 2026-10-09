@@ -12,3 +12,4 @@ yarn-error.log*
 
 # Internal planning docs (not part of public repo history)
 IMPLEMENTATION_GUIDE.md
+API_GUIDE.md

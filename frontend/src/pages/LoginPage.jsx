@@ -276,16 +276,10 @@ export function LoginPage() {
               )}
             </button>
 
-            {/* Student Registration Link */}
+            {/* Account Provisioning Notice */}
             <div className="text-center pt-2">
               <p className="text-xs text-text-secondary">
-                New student without credentials?{' '}
-                <Link
-                  to="/register"
-                  className="text-primary-600 hover:text-primary-700 font-semibold underline underline-offset-2"
-                >
-                  Register here
-                </Link>
+                Student credentials are automatically provisioned by college TPO & Department Coordinators upon enrollment.
               </p>
             </div>
           </form>
