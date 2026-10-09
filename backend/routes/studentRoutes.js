@@ -81,4 +81,36 @@ router.put(
   studentProfileController.updateSemesterRecord
 );
 
+// GET /api/students (List students with filters & pagination for TPO & Coordinator)
+router.get(
+  '/',
+  authenticate,
+  requireRole('tpo', 'coordinator'),
+  studentProfileController.listStudents
+);
+
+// GET /api/students/:id/academics (Fetch transcript for student by ID)
+router.get(
+  '/:id/academics',
+  authenticate,
+  studentProfileController.getMyAcademics
+);
+
+// GET /api/students/:id (Get single student full profile for TPO & Coordinator)
+router.get(
+  '/:id',
+  authenticate,
+  requireRole('tpo', 'coordinator'),
+  studentProfileController.getStudentById
+);
+
+// DELETE /api/students/:id (Delete student account - TPO only)
+router.delete(
+  '/:id',
+  authenticate,
+  requireRole('tpo'),
+  studentProfileController.deleteStudent
+);
+
 module.exports = router;
+

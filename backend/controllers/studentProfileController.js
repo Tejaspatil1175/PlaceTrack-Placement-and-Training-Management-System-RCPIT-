@@ -108,20 +108,76 @@ const getMyProfile = async (req, res, next) => {
 };
 
 /**
- * Semester-wise breakdown / transcript view
+ * Semester-wise breakdown / transcript view (Student self or TPO / Coordinator by ID)
  */
 const getMyAcademics = async (req, res, next) => {
   try {
-    const studentProfile = await StudentProfile.findOne({
-      where: { userId: req.user.id },
-      include: [
-        {
-          model: SemesterRecord,
-          as: 'semesterRecords'
+    const studentIdentifier = req.params.id || 'me';
+    let studentProfile = null;
+
+    if (studentIdentifier === 'me') {
+      studentProfile = await StudentProfile.findOne({
+        where: { userId: req.user.id },
+        include: [
+          {
+            model: SemesterRecord,
+            as: 'semesterRecords'
+          }
+        ],
+        order: [[{ model: SemesterRecord, as: 'semesterRecords' }, 'semesterNumber', 'ASC']]
+      });
+    } else {
+      if (
+        req.user.role === 'student' &&
+        String(req.user.id) !== String(studentIdentifier) &&
+        req.user.prn !== studentIdentifier
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden: You can only view your own academic transcript'
+        });
+      }
+
+      const { Op } = require('sequelize');
+      studentProfile = await StudentProfile.findOne({
+        where: {
+          [Op.or]: [
+            { id: isNaN(studentIdentifier) ? 0 : parseInt(studentIdentifier, 10) },
+            { userId: isNaN(studentIdentifier) ? 0 : parseInt(studentIdentifier, 10) }
+          ]
+        },
+        include: [
+          { model: User, as: 'user' },
+          { model: SemesterRecord, as: 'semesterRecords' }
+        ],
+        order: [[{ model: SemesterRecord, as: 'semesterRecords' }, 'semesterNumber', 'ASC']]
+      });
+
+      if (!studentProfile) {
+        const userWithPrn = await User.findOne({ where: { prn: studentIdentifier } });
+        if (userWithPrn) {
+          studentProfile = await StudentProfile.findOne({
+            where: { userId: userWithPrn.id },
+            include: [
+              { model: User, as: 'user' },
+              { model: SemesterRecord, as: 'semesterRecords' }
+            ],
+            order: [[{ model: SemesterRecord, as: 'semesterRecords' }, 'semesterNumber', 'ASC']]
+          });
         }
-      ],
-      order: [[{ model: SemesterRecord, as: 'semesterRecords' }, 'semesterNumber', 'ASC']]
-    });
+      }
+
+      if (
+        req.user.role === 'coordinator' &&
+        studentProfile?.user &&
+        studentProfile.user.departmentId !== req.user.departmentId
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden: You can only view academic records for students in your department'
+        });
+      }
+    }
 
     if (!studentProfile) {
       return res.status(404).json({
@@ -142,7 +198,7 @@ const getMyAcademics = async (req, res, next) => {
         cgpa: parseFloat(studentProfile.cgpa),
         activeBacklogs: studentProfile.activeBacklogs,
         totalSemestersRecorded: records.length,
-        semesterRecords: records.map(r => ({
+        semesterRecords: records.map((r) => ({
           id: r.id,
           semesterNumber: r.semesterNumber,
           sgpa: parseFloat(r.sgpa),
@@ -157,6 +213,7 @@ const getMyAcademics = async (req, res, next) => {
     return next(error);
   }
 };
+
 
 /**
  * Update student self profile (Skills, address, phone only; academic fields locked)
@@ -360,11 +417,304 @@ const updateSemesterRecord = async (req, res, next) => {
   }
 };
 
+/**
+ * List all students with filtering, search, and pagination (TPO and Coordinator)
+ */
+const listStudents = async (req, res, next) => {
+  try {
+    const {
+      search,
+      departmentId,
+      branch,
+      admissionYear,
+      cgpaMin,
+      minCgpa,
+      backlogStatus,
+      maxBacklogs,
+      placementStatus,
+      page = 1,
+      limit = 50
+    } = req.query;
+
+    const parsedPage = Math.max(1, parseInt(page, 10) || 1);
+    const parsedLimit = Math.min(100, Math.max(1, parseInt(limit, 10) || 50));
+    const offset = (parsedPage - 1) * parsedLimit;
+
+    const { Op } = require('sequelize');
+    const { Application } = require('../models');
+
+    const userWhere = { role: 'student' };
+    const profileWhere = {};
+
+    // Coordinator can only view students from their assigned department
+    if (req.user.role === 'coordinator') {
+      userWhere.departmentId = req.user.departmentId;
+    } else if (departmentId) {
+      userWhere.departmentId = departmentId;
+    }
+
+    // Search by name, email, or PRN
+    if (search) {
+      userWhere[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { email: { [Op.like]: `%${search}%` } },
+        { prn: { [Op.like]: `%${search}%` } }
+      ];
+    }
+
+    // Filter by branch
+    if (branch) {
+      profileWhere.branch = branch;
+    }
+
+    // Filter by admissionYear
+    if (admissionYear) {
+      profileWhere.admissionYear = parseInt(admissionYear, 10);
+    }
+
+    // Filter by CGPA
+    const effectiveMinCgpa = cgpaMin || minCgpa;
+    if (effectiveMinCgpa) {
+      profileWhere.cgpa = { [Op.gte]: parseFloat(effectiveMinCgpa) };
+    }
+
+    // Filter by active backlogs
+    if (backlogStatus === 'no_backlogs' || maxBacklogs === '0') {
+      profileWhere.activeBacklogs = 0;
+    } else if (backlogStatus === 'has_backlogs') {
+      profileWhere.activeBacklogs = { [Op.gt]: 0 };
+    } else if (maxBacklogs !== undefined && maxBacklogs !== '') {
+      profileWhere.activeBacklogs = { [Op.lte]: parseInt(maxBacklogs, 10) };
+    }
+
+    const { count, rows: students } = await User.findAndCountAll({
+      where: userWhere,
+      attributes: { exclude: ['passwordHash'] },
+      include: [
+        {
+          model: Department,
+          as: 'department',
+          attributes: ['id', 'name', 'code']
+        },
+        {
+          model: StudentProfile,
+          as: 'studentProfile',
+          where: Object.keys(profileWhere).length > 0 ? profileWhere : undefined,
+          required: Object.keys(profileWhere).length > 0,
+          include: [
+            {
+              model: Application,
+              as: 'applications',
+              attributes: ['id', 'status', 'driveId']
+            }
+          ]
+        }
+      ],
+      order: [['name', 'ASC']],
+      limit: parsedLimit,
+      offset,
+      distinct: true
+    });
+
+    const formattedStudents = students.map((student) => {
+      const studentJson = student.toJSON ? student.toJSON() : { ...student };
+      const applications = studentJson.studentProfile?.applications || [];
+      let calculatedPlacementStatus = 'Unplaced';
+      if (applications.some((a) => a.status === 'ACCEPTED')) {
+        calculatedPlacementStatus = 'Placed';
+      } else if (applications.some((a) => a.status === 'SHORTLISTED')) {
+        calculatedPlacementStatus = 'Shortlisted';
+      } else if (applications.some((a) => a.status === 'APPLIED')) {
+        calculatedPlacementStatus = 'Applied';
+      }
+      studentJson.placementStatus = calculatedPlacementStatus;
+      return studentJson;
+    });
+
+    let finalStudents = formattedStudents;
+    if (placementStatus) {
+      finalStudents = formattedStudents.filter(
+        (s) => s.placementStatus.toLowerCase() === placementStatus.toLowerCase()
+      );
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Students fetched successfully',
+      data: {
+        students: finalStudents,
+        total: count,
+        page: parsedPage,
+        limit: parsedLimit
+      }
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Get student by ID or PRN (TPO & Coordinator)
+ */
+const getStudentById = async (req, res, next) => {
+  try {
+    const studentIdentifier = req.params.id;
+    const { Op } = require('sequelize');
+    const { Application, Drive } = require('../models');
+
+    let user = await User.findOne({
+      where: {
+        role: 'student',
+        [Op.or]: [
+          { id: isNaN(studentIdentifier) ? 0 : parseInt(studentIdentifier, 10) },
+          { prn: studentIdentifier }
+        ]
+      },
+      attributes: { exclude: ['passwordHash'] },
+      include: [
+        {
+          model: Department,
+          as: 'department',
+          attributes: ['id', 'name', 'code']
+        },
+        {
+          model: StudentProfile,
+          as: 'studentProfile',
+          include: [
+            {
+              model: SemesterRecord,
+              as: 'semesterRecords'
+            },
+            {
+              model: Application,
+              as: 'applications',
+              include: [
+                {
+                  model: Drive,
+                  as: 'drive',
+                  attributes: ['id', 'companyName', 'role', 'ctc', 'status']
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!user && !isNaN(studentIdentifier)) {
+      const profile = await StudentProfile.findByPk(parseInt(studentIdentifier, 10));
+      if (profile) {
+        user = await User.findByPk(profile.userId, {
+          attributes: { exclude: ['passwordHash'] },
+          include: [
+            {
+              model: Department,
+              as: 'department',
+              attributes: ['id', 'name', 'code']
+            },
+            {
+              model: StudentProfile,
+              as: 'studentProfile',
+              include: [
+                {
+                  model: SemesterRecord,
+                  as: 'semesterRecords'
+                },
+                {
+                  model: Application,
+                  as: 'applications',
+                  include: [
+                    {
+                      model: Drive,
+                      as: 'drive',
+                      attributes: ['id', 'companyName', 'role', 'ctc', 'status']
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        });
+      }
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // Coordinator department boundary enforcement
+    if (req.user.role === 'coordinator' && user.departmentId !== req.user.departmentId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden: You can only view students from your assigned department'
+      });
+    }
+
+    const userJson = user.toJSON ? user.toJSON() : { ...user };
+    const applications = userJson.studentProfile?.applications || [];
+    let calculatedPlacementStatus = 'Unplaced';
+    if (applications.some((a) => a.status === 'ACCEPTED')) {
+      calculatedPlacementStatus = 'Placed';
+    } else if (applications.some((a) => a.status === 'SHORTLISTED')) {
+      calculatedPlacementStatus = 'Shortlisted';
+    } else if (applications.some((a) => a.status === 'APPLIED')) {
+      calculatedPlacementStatus = 'Applied';
+    }
+    userJson.placementStatus = calculatedPlacementStatus;
+
+    return res.status(200).json({
+      success: true,
+      message: 'Student details fetched successfully',
+      data: userJson
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+/**
+ * Delete student account (TPO only)
+ */
+const deleteStudent = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findOne({
+      where: {
+        id,
+        role: 'student'
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    await user.destroy();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Student account deleted successfully'
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   getMyProfile,
   getMyAcademics,
   updateMyProfile,
   uploadResume,
   getDepartmentStudents,
-  updateSemesterRecord
+  updateSemesterRecord,
+  listStudents,
+  getStudentById,
+  deleteStudent
 };
+
