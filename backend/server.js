@@ -58,6 +58,11 @@ const startServer = async () => {
   try {
     await sequelize.authenticate();
     console.log('Database connected successfully.');
+    if (process.env.NODE_ENV !== 'test') {
+      const db = require('./models');
+      await db.sequelize.sync();
+      console.log('Database models synchronized successfully.');
+    }
   } catch (error) {
     console.error('Unable to connect to the database:', error.message);
   }
