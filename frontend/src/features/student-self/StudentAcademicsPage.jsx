@@ -52,36 +52,27 @@ export function StudentAcademicsPage() {
     },
   });
 
-  const isLoading = isMeLoading || isAcademicsLoading;
+  const payload = academicsData?.data || academicsData || {};
+  const rawSemesterRecords = payload.semesterRecords || (Array.isArray(payload) ? payload : []);
+  const semesterRecords = Array.isArray(rawSemesterRecords) ? rawSemesterRecords : [];
 
-  // Fallback demo semester records if real API returns empty
-  const defaultSemesterRecords = [
-    { id: 1, semesterNumber: 1, sgpa: 8.20, totalCredits: 22, newBacklogs: 0, clearedBacklogs: 0, academicYear: '2021-22' },
-    { id: 2, semesterNumber: 2, sgpa: 8.45, totalCredits: 22, newBacklogs: 0, clearedBacklogs: 0, academicYear: '2021-22' },
-    { id: 3, semesterNumber: 3, sgpa: 8.60, totalCredits: 24, newBacklogs: 1, clearedBacklogs: 0, academicYear: '2022-23' },
-    { id: 4, semesterNumber: 4, sgpa: 8.90, totalCredits: 24, newBacklogs: 0, clearedBacklogs: 1, academicYear: '2022-23' },
-    { id: 5, semesterNumber: 5, sgpa: 8.75, totalCredits: 23, newBacklogs: 0, clearedBacklogs: 0, academicYear: '2023-24' },
-    { id: 6, semesterNumber: 6, sgpa: 9.10, totalCredits: 23, newBacklogs: 0, clearedBacklogs: 0, academicYear: '2023-24' },
-  ];
-
-  const studentProfile = meData?.studentProfile || user?.studentProfile || {};
-  const semesterRecords = academicsData?.semesterRecords || academicsData?.records || defaultSemesterRecords;
+  const studentProfile = payload || meData?.data?.profile || meData?.studentProfile || user?.studentProfile || {};
   
   // Calculate computed CGPA if not directly provided
-  const computedCgpa = studentProfile.cgpa || (
-    semesterRecords.length > 0
-      ? (semesterRecords.reduce((acc, curr) => acc + Number(curr.sgpa), 0) / semesterRecords.length).toFixed(2)
-      : '8.75'
-  );
+  const computedCgpa = studentProfile.cgpa !== undefined && studentProfile.cgpa !== null
+    ? parseFloat(studentProfile.cgpa).toFixed(2)
+    : semesterRecords.length > 0
+    ? (semesterRecords.reduce((acc, curr) => acc + Number(curr.sgpa || 0), 0) / semesterRecords.length).toFixed(2)
+    : '0.00';
 
-  const totalCredits = semesterRecords.reduce((acc, curr) => acc + Number(curr.totalCredits || 0), 0);
+  const totalCredits = semesterRecords.reduce((acc, curr) => acc + Number(curr.credits || curr.totalCredits || 0), 0);
   const activeBacklogs = studentProfile.activeBacklogs ?? 0;
 
   // Chart data formatting
   const chartData = semesterRecords.map((rec) => ({
     semesterName: `Sem ${rec.semesterNumber}`,
-    sgpa: Number(rec.sgpa),
-    credits: rec.totalCredits,
+    sgpa: Number(rec.sgpa || 0),
+    credits: rec.credits || rec.totalCredits || 0,
   }));
 
   if (isLoading) {

@@ -31,42 +31,48 @@ export function StudentDashboardView({ data, isLoading, user }) {
     );
   }
 
-  // Student specific parameters from session / API
-  const studentName = user?.name || 'Rahul Sharma';
-  const prn = user?.prn || '2021012345';
-  const branch = user?.branch || 'Computer Engineering';
-  const semester = user?.currentSemester || 7;
+  const student = data?.student || {};
+  const studentName = student.name || user?.name || 'Student';
+  const prn = student.prn || user?.prn || 'N/A';
+  const branch = student.branch || user?.departmentName || user?.branch || 'Engineering';
+  const semester = student.semester || user?.currentSemester || 7;
 
-  // Fallback / Mock Student analytical state
   const stats = data?.stats || {
-    cgpa: '8.75',
+    cgpa: '0.00',
     activeBacklogs: 0,
-    applicationsCount: 5,
-    eligibleDrivesCount: 12,
+    applicationsCount: 0,
+    eligibleDrivesCount: 0,
   };
 
   // Profile Completeness calculation
-  const hasResume = Boolean(user?.resumeUrl || true);
-  const skillsCount = user?.skills?.length || 4;
+  const hasResume = Boolean(student.resumeUrl || user?.resumeUrl);
+  const skillsCount = (student.skills || user?.skills || []).length;
   const profileCompleteness = Math.min(100, (hasResume ? 50 : 0) + Math.min(50, skillsCount * 12.5));
 
-  const eligibleDrives = data?.eligibleDrives || [
-    { id: 1, company: 'Tata Consultancy Services (TCS)', role: 'Software Developer', ctc: '7.0 LPA', minCgpa: 6.5, deadline: '2026-09-25' },
-    { id: 2, company: 'Infosys Limited', role: 'System Engineer', ctc: '6.5 LPA', minCgpa: 6.0, deadline: '2026-09-28' },
-    { id: 3, company: 'Persistent Systems', role: 'Software Engineer', ctc: '8.5 LPA', minCgpa: 7.5, deadline: '2026-10-15' },
-  ];
+  const eligibleDrives = (data?.eligibleDrives || []).map((d) => ({
+    id: d.id,
+    company: d.companyName || d.company || 'Campus Company',
+    role: d.role || d.jobTitle || 'Role',
+    ctc: d.ctc ? `${d.ctc} LPA` : (d.salaryPackage || 'Competitive'),
+    minCgpa: d.minCgpa ?? 'N/A',
+    deadline: d.deadline ? new Date(d.deadline).toLocaleDateString() : 'Open',
+  }));
 
-  const notifications = data?.notifications || [
-    { id: 1, title: 'TCS Ninja Shortlist Released', text: 'You have been shortlisted for Round 1 Technical Interview.', time: '2 hours ago', type: 'success' },
-    { id: 2, title: 'Resume Verification Notice', text: 'Please ensure your uploaded Cloudinary resume link is active before Sept 20.', time: '1 day ago', type: 'info' },
-    { id: 3, title: 'Aptitude Mock Test Schedule', text: 'College-wide online mock test begins this Saturday at 10:00 AM.', time: '2 days ago', type: 'warning' },
-  ];
+  const notifications = (data?.notifications || []).map((n) => ({
+    id: n.id,
+    title: n.title,
+    text: n.body || n.message || '',
+    time: n.sentAt || (n.createdAt ? new Date(n.createdAt).toLocaleDateString() : 'Recent'),
+    type: n.type || 'info',
+  }));
 
-  const events = data?.events || [
-    { id: 1, title: 'System Design & Data Structures Workshop', date: '22 Sept 2026', time: '02:00 PM', location: 'Seminar Hall B' },
-    { id: 2, title: 'Mock Technical Interview Session', date: '26 Sept 2026', time: '10:00 AM', location: 'T&P Lab 3' },
-    { id: 3, title: 'Soft Skills & Group Discussion Masterclass', date: '01 Oct 2026', time: '11:30 AM', location: 'Main Auditorium' },
-  ];
+  const events = (data?.events || []).map((e) => ({
+    id: e.id,
+    title: e.title,
+    date: e.startDate ? new Date(e.startDate).toLocaleDateString() : (e.date || 'Upcoming'),
+    time: e.time || 'TBA',
+    location: e.venue || e.location || 'RCPIT Campus',
+  }));
 
   return (
     <div className="space-y-6">

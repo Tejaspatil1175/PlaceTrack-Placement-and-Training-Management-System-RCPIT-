@@ -26,10 +26,21 @@ export const createStudentApi = async (data) => {
 };
 
 /**
- * Update own student profile (skills, address)
+ * Update own student profile (skills, address, phone, certifications)
  */
 export const updateStudentProfileApi = async (id, data) => {
   const response = await apiClient.put('/students/me', data);
+  return response.data;
+};
+
+/**
+ * Upload student resume PDF to Cloudinary (Student only)
+ * @param {FormData} formData - multipart form data with 'resume' field
+ */
+export const uploadResumeApi = async (formData) => {
+  const response = await apiClient.post('/students/me/resume', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return response.data;
 };
 

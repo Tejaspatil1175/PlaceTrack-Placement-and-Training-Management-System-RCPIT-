@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../store/authStore';
 import { getMeApi } from '../../api/auth';
-import { updateStudentProfileApi } from '../../api/students';
+import { updateStudentProfileApi, uploadResumeApi } from '../../api/students';
 import { useToast } from '../../components/ui/Toast';
 import { Skeleton } from '../../components/ui/Skeleton';
 import {
@@ -28,16 +28,13 @@ export function StudentProfilePage() {
   const { addToast } = useToast();
   const queryClient = useQueryClient();
 
-  const [skills, setSkills] = useState(['JavaScript', 'React.js', 'Node.js', 'MySQL', 'Python']);
+  const [skills, setSkills] = useState([]);
   const [newSkill, setNewSkill] = useState('');
-  const [certifications, setCertifications] = useState([
-    { id: 1, name: 'AWS Certified Cloud Practitioner', issuer: 'Amazon Web Services', year: '2024' },
-    { id: 2, name: 'Full-Stack Web Development Bootcamp', issuer: 'Udemy', year: '2023' },
-  ]);
+  const [certifications, setCertifications] = useState([]);
   const [newCertName, setNewCertName] = useState('');
   const [newCertIssuer, setNewCertIssuer] = useState('');
-  const [phone, setPhone] = useState(user?.phone || '9876543210');
-  const [address, setAddress] = useState('Shirpur, Dhule District, Maharashtra 425405');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
   const [resumeFile, setResumeFile] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -53,8 +50,18 @@ export function StudentProfilePage() {
     },
   });
 
-  const studentData = meData?.user || user;
-  const profile = meData?.studentProfile || studentData?.studentProfile || {};
+  const studentData = meData?.data?.user || meData?.user || meData?.data || user || {};
+  const profile = meData?.data?.profile || meData?.studentProfile || studentData?.studentProfile || {};
+
+  // Sync state with loaded data
+  useEffect(() => {
+    if (studentData || profile) {
+      if (studentData.phone) setPhone(studentData.phone);
+      if (profile.address) setAddress(profile.address);
+      if (Array.isArray(profile.skills)) setSkills(profile.skills);
+      if (Array.isArray(profile.certifications)) setCertifications(profile.certifications);
+    }
+  }, [meData]);
 
   const handleAddSkill = (e) => {
     e.preventDefault();
@@ -73,7 +80,7 @@ export function StudentProfilePage() {
     if (newCertName.trim() && newCertIssuer.trim()) {
       setCertifications([
         ...certifications,
-        { id: Date.now(), name: newCertName.trim(), issuer: newCertIssuer.trim(), year: '2025' },
+        { id: Date.now(), name: newCertName.trim(), issuer: newCertIssuer.trim(), year: String(new Date().getFullYear()) },
       ]);
       setNewCertName('');
       setNewCertIssuer('');
@@ -87,6 +94,10 @@ export function StudentProfilePage() {
   const handleResumeSelect = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!file.name.endsWith('.pdf')) {
+        addToast('Please select a valid PDF document for your resume.', 'error');
+        return;
+      }
       setResumeFile(file);
       addToast(`Selected resume file: ${file.name}`, 'info');
     }
@@ -102,9 +113,20 @@ export function StudentProfilePage() {
         certifications,
       };
       await updateStudentProfileApi('me', payload);
-      addToast('Profile updated successfully!', 'success');
+
+      if (resumeFile) {
+        const formData = new FormData();
+        formData.append('resume', resumeFile);
+        await uploadResumeApi(formData);
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ['studentProfileMe'] });
+      await queryClient.invalidateQueries({ queryKey: ['dashboardAnalytics'] });
+      addToast('Profile and resume updated successfully!', 'success');
+      setResumeFile(null);
     } catch (err) {
-      addToast('Profile updated successfully! (Demo mode)', 'success');
+      console.error('Update profile error:', err);
+      addToast(err?.response?.data?.message || 'Failed to update profile', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -122,13 +144,13 @@ export function StudentProfilePage() {
     );
   }
 
-  const currentResumeUrl = profile.resumeUrl || 'https://res.cloudinary.com/demo/image/upload/v1/sample_resume.pdf';
-  const cgpa = profile.cgpa || '8.75';
-  const backlogs = profile.activeBacklogs || 0;
-  const branch = profile.branch || 'Computer Engineering';
+  const currentResumeUrl = profile.resumeUrl;
+  const cgpa = profile.cgpa ? parseFloat(profile.cgpa).toFixed(2) : '0.00';
+  const backlogs = profile.activeBacklogs ?? 0;
+  const branch = profile.branch || studentData?.department?.name || 'Engineering';
   const semester = profile.currentSemester || 7;
   const admissionYear = profile.admissionYear || 2021;
-  const prn = studentData?.prn || '2021012345';
+  const prn = studentData?.prn || 'N/A';
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
