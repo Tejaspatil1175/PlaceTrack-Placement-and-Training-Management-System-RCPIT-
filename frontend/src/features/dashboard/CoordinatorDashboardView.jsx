@@ -276,12 +276,13 @@ export function CoordinatorDashboardView({ data, isLoading, user }) {
 
           <div className="space-y-4">
             {activities.map((act) => {
-              const Icon = act.icon;
+              const Icon = typeof act.icon === 'function' ? act.icon : FileCheck;
               return (
                 <div key={act.id} className="flex items-start space-x-3 text-xs border-b border-border-subtle/50 pb-3 last:border-0 last:pb-0">
                   <div className="w-7 h-7 rounded-lg bg-primary-100 text-primary-700 flex items-center justify-center shrink-0 mt-0.5">
                     <Icon className="w-3.5 h-3.5" />
                   </div>
+
                   <div className="flex-1 min-w-0">
                     <p className="text-text-primary font-medium leading-tight">{act.text}</p>
                     <span className="text-[10px] text-text-muted mt-1 block">{act.time}</span>
