@@ -42,25 +42,18 @@ export function DriveEligibleStudentsPage() {
     },
   });
 
-  const drive = driveData || {
-    id: id || 1,
-    companyName: 'Tata Consultancy Services (TCS)',
-    jobTitle: 'Software Engineer (Ninja / Digital)',
-    salaryPackage: '7.0 LPA',
-    minCgpa: 6.5,
-    maxBacklogs: 0,
-    allowedBranches: ['Computer', 'IT', 'AI&DS', 'ENTC'],
-  };
+  const drive = driveData?.data || driveData || {};
+  const rawStudents = eligibleData?.data?.eligibleStudents || eligibleData?.data || (Array.isArray(eligibleData) ? eligibleData : []);
 
-  const fallbackEligibleStudents = [
-    { id: 1, prn: '2021012345', name: 'Rahul Ramesh Sharma', branch: 'Computer', cgpa: 8.75, backlogs: 0, status: 'Applied' },
-    { id: 2, prn: '2021012346', name: 'Priya Suresh Patel', branch: 'IT', cgpa: 9.12, backlogs: 0, status: 'Shortlisted' },
-    { id: 4, prn: '2021012348', name: 'Neha Rajesh Deshmukh', branch: 'Computer', cgpa: 8.90, backlogs: 0, status: 'Applied' },
-    { id: 6, prn: '2021012350', name: 'Ganesh Shinde', branch: 'AI&DS', cgpa: 7.80, backlogs: 0, status: 'Eligible' },
-    { id: 7, prn: '2021012351', name: 'Kavita Patil', branch: 'Computer', cgpa: 8.40, backlogs: 0, status: 'Eligible' },
-  ];
-
-  const students = eligibleData?.students || fallbackEligibleStudents;
+  const students = (Array.isArray(rawStudents) ? rawStudents : []).map((s) => ({
+    id: s.id,
+    prn: s.prn || s.user?.prn || 'N/A',
+    name: s.name || s.user?.name || 'N/A',
+    branch: s.branch || s.department?.name || 'N/A',
+    cgpa: s.cgpa ? parseFloat(s.cgpa).toFixed(2) : '0.00',
+    backlogs: s.activeBacklogs ?? s.backlogs ?? 0,
+    status: s.applicationStatus || s.status || 'Eligible',
+  }));
 
   const handleExportCsv = () => {
     const csvContent =
@@ -71,7 +64,7 @@ export function DriveEligibleStudentsPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Eligible_Students_${drive.companyName.replace(/\s+/g, '_')}.csv`);
+    link.setAttribute('download', `Eligible_Students_${(drive.companyName || 'Drive').replace(/\s+/g, '_')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -98,17 +91,18 @@ export function DriveEligibleStudentsPage() {
             <span>Auto-Matched Eligibility Filter</span>
           </div>
           <h1 className="font-heading text-2xl font-bold text-white">
-            {drive.companyName} — Eligible Students List
+            {drive.companyName || 'Campus Drive'} — Eligible Students List
           </h1>
           <p className="text-primary-100/80 text-xs mt-0.5">
-            Role: {drive.jobTitle} • Package: <span className="font-mono text-accent-500">{drive.salaryPackage}</span>
+            Role: {drive.role || drive.jobTitle || 'All Roles'} • Package: <span className="font-mono text-accent-500">{drive.ctc ? `${drive.ctc} LPA` : drive.salaryPackage || 'Competitive'}</span>
           </p>
         </div>
 
         <button
           type="button"
           onClick={handleExportCsv}
-          className="px-4 py-2.5 bg-accent-500 hover:bg-accent-500/90 text-white font-heading font-bold text-xs rounded-lg shadow-sm inline-flex items-center space-x-2 shrink-0 transition-all"
+          disabled={students.length === 0}
+          className="px-4 py-2.5 bg-accent-500 hover:bg-accent-500/90 disabled:opacity-50 text-white font-heading font-bold text-xs rounded-lg shadow-sm inline-flex items-center space-x-2 shrink-0 transition-all"
         >
           <Download className="w-4 h-4" />
           <span>Export List to CSV</span>
@@ -119,9 +113,11 @@ export function DriveEligibleStudentsPage() {
       <div className="p-4 bg-bg-surface border border-border-subtle rounded-xl shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center space-x-4">
           <span className="font-bold text-text-primary">Matched Rules:</span>
-          <span className="px-2.5 py-1 bg-primary-100 text-primary-900 rounded font-semibold">Min CGPA ≥ {drive.minCgpa}</span>
-          <span className="px-2.5 py-1 bg-bg-base text-text-primary rounded border border-border-subtle">Max Backlogs: {drive.maxBacklogs}</span>
-          <span className="px-2.5 py-1 bg-bg-base text-text-primary rounded border border-border-subtle">Branches: {(drive.allowedBranches || []).join(', ')}</span>
+          <span className="px-2.5 py-1 bg-primary-100 text-primary-900 rounded font-semibold">Min CGPA ≥ {drive.minCgpa ?? 'N/A'}</span>
+          <span className="px-2.5 py-1 bg-bg-base text-text-primary rounded border border-border-subtle">Max Backlogs: {drive.maxBacklogs ?? 0}</span>
+          <span className="px-2.5 py-1 bg-bg-base text-text-primary rounded border border-border-subtle">
+            Branches: {Array.isArray(drive.eligibleBranches || drive.allowedBranches) ? (drive.eligibleBranches || drive.allowedBranches).join(', ') : (drive.eligibleBranches || drive.allowedBranches || 'All Branches')}
+          </span>
         </div>
         <span className="font-bold text-success-600 bg-success-100 px-3 py-1 rounded-full">
           {students.length} Students Qualified

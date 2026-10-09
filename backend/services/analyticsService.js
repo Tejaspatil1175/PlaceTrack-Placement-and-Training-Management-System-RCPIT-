@@ -80,6 +80,34 @@ const getTpoPlacementAnalytics = async () => {
     });
   }
 
+  // Package distribution calculation
+  const allDrives = await Drive.findAll({ attributes: ['ctc'] });
+  const packageDistribution = [
+    { bracket: '< 4.0 LPA', count: 0 },
+    { bracket: '4.0 - 6.0 LPA', count: 0 },
+    { bracket: '6.0 - 8.5 LPA', count: 0 },
+    { bracket: '8.5+ LPA', count: 0 }
+  ];
+
+  for (const d of allDrives) {
+    const ctc = parseFloat(d.ctc) || 0;
+    if (ctc < 4.0) packageDistribution[0].count++;
+    else if (ctc <= 6.0) packageDistribution[1].count++;
+    else if (ctc <= 8.5) packageDistribution[2].count++;
+    else packageDistribution[3].count++;
+  }
+
+  // Conversion funnel calculation
+  const shortlistedCount = await Application.count({
+    where: { status: { [Op.in]: ['SHORTLISTED', 'ACCEPTED'] } }
+  });
+
+  const conversionFunnel = [
+    { stage: 'Total Applications', count: totalApplications, fill: '#1C3F63' },
+    { stage: 'Shortlisted for Test/Interview', count: shortlistedCount, fill: '#2D5A82' },
+    { stage: 'Final Offers Issued', count: studentsPlaced, fill: '#B8862E' }
+  ];
+
   // Yearly Trend
   const yearlyTrend = [
     { year: '2022', placed: Math.max(120, Math.round(studentsPlaced * 0.7)), rate: 60 },
@@ -181,6 +209,8 @@ const getTpoPlacementAnalytics = async () => {
       placementRateDelta: '+8.2% vs previous session'
     },
     branchWisePlacement,
+    packageDistribution,
+    conversionFunnel,
     yearlyTrend,
     upcomingDrives,
     departmentSnapshots,

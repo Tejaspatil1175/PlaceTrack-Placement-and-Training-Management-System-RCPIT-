@@ -48,54 +48,19 @@ export function OfficerDashboardView({ data, isLoading }) {
   const payload = data?.data || data;
 
   const stats = payload?.stats || {
-    totalStudents: 540,
-    activeDrives: 24,
-    totalApplications: 1280,
-    studentsPlaced: 185,
-    placementRate: 68.5,
-    placementRateDelta: '+8.2% vs 2024',
+    totalStudents: 0,
+    activeDrives: 0,
+    totalApplications: 0,
+    studentsPlaced: 0,
+    placementRate: 0,
+    placementRateDelta: '0%',
   };
 
-  const branchData = payload?.branchWisePlacement || [
-
-    { branch: 'Computer', rate: 82, target: 90 },
-    { branch: 'IT', rate: 78, target: 85 },
-    { branch: 'AI & DS', rate: 74, target: 80 },
-    { branch: 'ENTC', rate: 61, target: 70 },
-    { branch: 'Mechanical', rate: 52, target: 65 },
-    { branch: 'Civil', rate: 45, target: 60 },
-  ];
-
-  const trendData = payload?.yearlyTrend || [
-    { year: '2021', placed: 110, rate: 55 },
-    { year: '2022', placed: 135, rate: 60 },
-    { year: '2023', placed: 152, rate: 64 },
-    { year: '2024', placed: 168, rate: 66 },
-    { year: '2025', placed: 185, rate: 68.5 },
-  ];
-
-  const upcomingDrives = payload?.upcomingDrives || [
-    { id: 1, company: 'Tata Consultancy Services (TCS)', ctc: '7.0 LPA', deadline: '2026-09-25', status: 'Open', applicants: 142 },
-    { id: 2, company: 'Infosys Limited', ctc: '6.5 LPA', deadline: '2026-09-28', status: 'Open', applicants: 118 },
-    { id: 3, company: 'Capgemini India', ctc: '5.5 LPA', deadline: '2026-10-02', status: 'Shortlisting', applicants: 95 },
-    { id: 4, company: 'KPIT Technologies', ctc: '6.0 LPA', deadline: '2026-10-08', status: 'Open', applicants: 74 },
-    { id: 5, company: 'Persistent Systems', ctc: '8.5 LPA', deadline: '2026-10-15', status: 'Upcoming', applicants: 0 },
-  ];
-
-  const activities = payload?.recentActivities || [
-    { id: 1, text: 'TCS Ninja drive eligibility filter generated for 180 students', time: '10 mins ago', icon: Briefcase },
-    { id: 2, text: 'Computer Dept. Coordinator updated 14 interview selections', time: '1 hour ago', icon: FileCheck },
-    { id: 3, text: 'Bulk Excel import completed for 60 EnTC 3rd year students', time: '3 hours ago', icon: Users },
-    { id: 4, text: 'Mock Aptitude Session announced by T&P Cell for Sem 7', time: 'Yesterday', icon: Bell },
-  ];
-
-  const departments = payload?.departmentSnapshots || [
-    { name: 'Computer Engineering', total: 140, placed: 82, rate: '74%' },
-    { name: 'Information Technology', total: 110, placed: 64, rate: '71%' },
-    { name: 'AI & Data Science', total: 90, placed: 50, rate: '69%' },
-    { name: 'Electronics & Telecommunication', total: 100, placed: 42, rate: '56%' },
-    { name: 'Mechanical Engineering', total: 60, placed: 22, rate: '44%' },
-  ];
+  const branchData = payload?.branchWisePlacement || [];
+  const trendData = payload?.yearlyTrend || [];
+  const upcomingDrives = payload?.upcomingDrives || [];
+  const activities = payload?.recentActivities || [];
+  const departments = payload?.departmentSnapshots || [];
 
 
   return (

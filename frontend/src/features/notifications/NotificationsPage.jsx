@@ -38,58 +38,15 @@ export function NotificationsPage() {
     },
   });
 
-  // Mock Notifications fallback for dev preview
-  const fallbackNotifications = [
-    {
-      id: 1,
-      title: 'TCS Ninja Round 1 Interview Shortlist Released',
-      body: 'The list of shortlisted candidates for TCS Ninja Round 1 Technical Interview is now available. Shortlisted students are requested to report to T&P Lab 3.',
-      type: 'result', // 'result' | 'drive' | 'event'
-      audience: 'Computer & IT Departments',
-      sentBy: 'Prof. T&P Officer',
-      sentAt: '2 hours ago',
-      isUnread: true,
-    },
-    {
-      id: 2,
-      title: 'Infosys Specialist Placement Drive Announced',
-      body: 'Infosys Limited is visiting RCPIT for Specialist Programmer (9.5 LPA) roles. Application deadline is Sept 28, 2026. Check eligibility and apply on the Drives portal.',
-      type: 'drive',
-      audience: 'College-wide (Sem 7)',
-      sentBy: 'Main T&P Cell',
-      sentAt: '1 day ago',
-      isUnread: true,
-    },
-    {
-      id: 3,
-      title: 'System Design & Full-Stack Development Workshop',
-      body: 'An interactive workshop on System Design and Microservices architecture by industry experts from Persistent Systems will be held on Sept 22 at Main Auditorium.',
-      type: 'event',
-      audience: 'Computer Department',
-      sentBy: 'Computer Dept. Coordinator',
-      sentAt: '2 days ago',
-      isUnread: false,
-    },
-    {
-      id: 4,
-      title: 'Mock Aptitude Test Mandatory Announcement',
-      body: 'All 7th semester students must attempt the online mock aptitude assessment scheduled for Saturday 10:00 AM.',
-      type: 'drive',
-      audience: 'College-wide',
-      sentBy: 'Prof. T&P Officer',
-      sentAt: '3 days ago',
-      isUnread: false,
-    },
-  ];
-
-  const notifications = data?.notifications || fallbackNotifications;
+  const rawNotifications = data?.data || (Array.isArray(data) ? data : data?.notifications);
+  const notifications = Array.isArray(rawNotifications) ? rawNotifications : [];
 
   // Filter
   const filtered = notifications.filter((n) => {
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
       const matchTitle = n.title?.toLowerCase().includes(q);
-      const matchBody = n.body?.toLowerCase().includes(q);
+      const matchBody = n.body?.toLowerCase().includes(q) || n.message?.toLowerCase().includes(q);
       if (!matchTitle && !matchBody) return false;
     }
     if (isStudent && studentFilter !== 'all') {
@@ -203,25 +160,27 @@ export function NotificationsPage() {
                         : 'bg-warning-100 text-warning-600'
                     }`}
                   >
-                    {item.type === 'result' ? 'Shortlist Result' : item.type === 'drive' ? 'Drive Announcement' : 'Event'}
+                    {item.type === 'result' ? 'Shortlist Result' : item.type === 'drive' ? 'Drive Announcement' : item.type || 'Announcement'}
                   </span>
                   {item.isUnread && (
                     <span className="w-2 h-2 rounded-full bg-accent-500 animate-pulse"></span>
                   )}
                 </div>
-                <span className="text-[11px] text-text-muted font-medium">{item.sentAt}</span>
+                <span className="text-[11px] text-text-muted font-medium">
+                  {item.sentAt || (item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '')}
+                </span>
               </div>
 
               <h3 className="font-heading text-base font-bold text-primary-900 mb-1">
                 {item.title}
               </h3>
               <p className="text-xs text-text-secondary leading-relaxed mb-3">
-                {item.body}
+                {item.body || item.message}
               </p>
 
               <div className="flex items-center justify-between text-[11px] text-text-muted pt-2 border-t border-border-subtle">
-                <span>Audience: <strong>{item.audience}</strong></span>
-                <span>Sent by: <strong>{item.sentBy}</strong></span>
+                <span>Audience: <strong>{item.audience || item.targetAudience || 'College-wide'}</strong></span>
+                <span>Sent by: <strong>{item.sentBy || item.sender?.name || 'T&P Officer'}</strong></span>
               </div>
             </div>
           ))}
@@ -245,14 +204,14 @@ export function NotificationsPage() {
                   <tr key={item.id} className="hover:bg-bg-base transition-colors">
                     <td className="py-3.5 px-4 max-w-md">
                       <span className="font-bold text-primary-900 block">{item.title}</span>
-                      <span className="text-[11px] text-text-muted line-clamp-1">{item.body}</span>
+                      <span className="text-[11px] text-text-muted line-clamp-1">{item.body || item.message}</span>
                     </td>
-                    <td className="py-3.5 px-4 font-medium text-text-secondary">{item.audience}</td>
-                    <td className="py-3.5 px-4 font-semibold text-text-primary">{item.sentBy}</td>
-                    <td className="py-3.5 px-4 text-text-muted">{item.sentAt}</td>
+                    <td className="py-3.5 px-4 font-medium text-text-secondary">{item.audience || item.targetAudience || 'College-wide'}</td>
+                    <td className="py-3.5 px-4 font-semibold text-text-primary">{item.sentBy || item.sender?.name || 'T&P Officer'}</td>
+                    <td className="py-3.5 px-4 text-text-muted">{item.sentAt || (item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '')}</td>
                     <td className="py-3.5 px-4 text-right">
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-primary-100 text-primary-900">
-                        {item.type}
+                        {item.type || 'General'}
                       </span>
                     </td>
                   </tr>

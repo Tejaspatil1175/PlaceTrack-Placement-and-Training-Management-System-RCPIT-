@@ -37,44 +37,8 @@ export function EventsPage() {
     },
   });
 
-  // Mock Events fallback for dev testing
-  const fallbackEvents = [
-    {
-      id: 1,
-      title: 'System Design & Microservices Architecture Masterclass',
-      type: 'Workshop', // 'Workshop' | 'Industry Talk' | 'Mock Interview' | 'Aptitude Training'
-      date: '2026-09-22',
-      time: '02:00 PM - 05:00 PM',
-      location: 'Seminar Hall B, Academic Block',
-      audience: 'Computer & IT Departments',
-      description: 'Hands-on training session on distributed systems, load balancing, and cloud architecture conducted by senior architects from Persistent Systems.',
-      organizer: 'T&P Cell & Computer Dept',
-    },
-    {
-      id: 2,
-      title: 'Mock Technical Interview & Resume Feedback Session',
-      type: 'Mock Interview',
-      date: '2026-09-26',
-      time: '10:00 AM - 04:00 PM',
-      location: 'T&P Lab 3 & Conference Room',
-      audience: 'All Registered 7th Semester Students',
-      description: 'One-on-one mock interview simulation with alumni and industry HRs. Personalized resume optimization and body language feedback.',
-      organizer: 'Main T&P Cell',
-    },
-    {
-      id: 3,
-      title: 'Industry Guest Lecture: Generative AI in Corporate Enterprise',
-      type: 'Industry Talk',
-      date: '2026-10-01',
-      time: '11:30 AM - 01:00 PM',
-      location: 'Main Auditorium, RCPIT Shirpur',
-      audience: 'College-wide',
-      description: 'Keynote talk by Vice President of Engineering at TCS on real-world applications of LLMs, Prompt Engineering, and enterprise AI transformation.',
-      organizer: 'Training & Placement Cell',
-    },
-  ];
-
-  const eventsList = data?.events || fallbackEvents;
+  const rawEvents = data?.data || (Array.isArray(data) ? data : data?.events);
+  const eventsList = Array.isArray(rawEvents) ? rawEvents : [];
 
   // Generate downloadable .ics iCalendar file client-side
   const handleDownloadIcs = (event) => {
@@ -211,9 +175,9 @@ export function EventsPage() {
                           : 'bg-warning-100 text-warning-600'
                       }`}
                     >
-                      {event.type}
+                      {event.type || 'Event'}
                     </span>
-                    <span className="text-[11px] text-text-muted">Target: <strong>{event.audience}</strong></span>
+                    <span className="text-[11px] text-text-muted">Target: <strong>{event.targetAudience || event.audience || 'College-wide'}</strong></span>
                   </div>
                   <h3 className="font-heading text-lg font-bold text-primary-900">
                     {event.title}
@@ -233,22 +197,26 @@ export function EventsPage() {
                 )}
               </div>
 
-              <p className="text-xs text-text-secondary leading-relaxed p-3 bg-bg-base rounded-lg border border-border-subtle">
-                {event.description}
-              </p>
+              {event.description && (
+                <p className="text-xs text-text-secondary leading-relaxed p-3 bg-bg-base rounded-lg border border-border-subtle">
+                  {event.description}
+                </p>
+              )}
 
               <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-text-muted pt-2 border-t border-border-subtle font-medium">
                 <div className="flex items-center space-x-4">
                   <span className="flex items-center space-x-1.5 text-primary-700 font-semibold">
                     <Clock className="w-4 h-4" />
-                    <span>{event.date} • {event.time}</span>
+                    <span>{event.startDate ? new Date(event.startDate).toLocaleDateString() : event.date} {event.time ? `• ${event.time}` : ''}</span>
                   </span>
-                  <span className="flex items-center space-x-1.5">
-                    <MapPin className="w-4 h-4 text-accent-500" />
-                    <span>{event.location}</span>
-                  </span>
+                  {(event.venue || event.location) && (
+                    <span className="flex items-center space-x-1.5">
+                      <MapPin className="w-4 h-4 text-accent-500" />
+                      <span>{event.venue || event.location}</span>
+                    </span>
+                  )}
                 </div>
-                <span>Organizer: <strong>{event.organizer}</strong></span>
+                <span>Organizer: <strong>{event.organizer || event.creator?.name || 'Training & Placement Cell'}</strong></span>
               </div>
             </div>
           ))}

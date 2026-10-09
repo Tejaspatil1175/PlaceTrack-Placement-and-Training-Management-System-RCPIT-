@@ -48,40 +48,18 @@ export function CoordinatorDashboardView({ data, isLoading, user }) {
   const payload = data?.data || data;
 
   const stats = payload?.stats || {
-    deptStudents: 120,
-    activeDrives: 18,
-    pendingShortlists: 42,
-    placedStudents: 48,
-    placementRate: 40.0,
-    placementRateDelta: '+5.5% vs 2024',
+    deptStudents: 0,
+    activeDrives: 0,
+    pendingShortlists: 0,
+    placedStudents: 0,
+    placementRate: 0,
+    placementRateDelta: '0%',
   };
 
-  const divisionData = payload?.divisionPlacement || [
-    { division: 'Div A', rate: 76, placed: 28 },
-    { division: 'Div B', rate: 68, placed: 24 },
-    { division: 'Div C', rate: 62, placed: 20 },
-  ];
-
-  const trendData = payload?.yearlyTrend || [
-    { year: '2021', placed: 32, rate: 50 },
-    { year: '2022', placed: 38, rate: 55 },
-    { year: '2023', placed: 42, rate: 58 },
-    { year: '2024', placed: 45, rate: 62 },
-    { year: '2025', placed: 48, rate: 64 },
-  ];
-
-  const upcomingDrives = payload?.upcomingDrives || [
-    { id: 1, company: 'TCS Ninja', ctc: '7.0 LPA', deadline: '2026-09-25', status: 'Open', eligibleCount: 38 },
-    { id: 2, company: 'Infosys Specialist', ctc: '9.5 LPA', deadline: '2026-09-28', status: 'Open', eligibleCount: 22 },
-    { id: 3, company: 'Capgemini Analyst', ctc: '5.5 LPA', deadline: '2026-10-02', status: 'Shortlisting', eligibleCount: 45 },
-    { id: 4, company: 'KPIT Technologies', ctc: '6.0 LPA', deadline: '2026-10-08', status: 'Open', eligibleCount: 29 },
-  ];
-
-  const activities = payload?.recentActivities || [
-    { id: 1, text: 'Auto-shortlisted 38 Computer Engg students for TCS Ninja', time: '20 mins ago', icon: Briefcase },
-    { id: 2, text: 'Uploaded semester 6 SGPA update sheet for Division B', time: '2 hours ago', icon: Users },
-    { id: 3, text: 'Verified 12 student resume submissions', time: 'Yesterday', icon: FileCheck },
-  ];
+  const divisionData = payload?.divisionPlacement || [];
+  const trendData = payload?.yearlyTrend || [];
+  const upcomingDrives = payload?.upcomingDrives || [];
+  const activities = payload?.recentActivities || [];
 
   return (
 

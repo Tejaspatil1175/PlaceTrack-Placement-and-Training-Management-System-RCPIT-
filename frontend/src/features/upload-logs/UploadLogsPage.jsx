@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../store/authStore';
+import { getUploadLogsApi } from '../../api/students';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import {
@@ -19,67 +20,61 @@ export function UploadLogsPage() {
 
   const [selectedLog, setSelectedLog] = useState(null);
 
-  // Mock Upload Logs audit data
-  const fallbackLogs = [
-    {
-      id: 101,
-      batchId: 'BATCH_20260911_01',
-      uploadedBy: 'Prof. T&P Officer',
-      department: 'Computer',
-      date: '2026-09-11 14:30',
-      totalRows: 60,
-      successCount: 58,
-      errorCount: 2,
-      status: 'Completed with Warnings',
-      errorsList: [
-        { row: 14, prn: '2021012399', name: 'Kunal Patil', reason: 'Invalid SGPA in SEM4_SGPA: 12.00 (Must be 0.00 - 10.00)' },
-        { row: 25, prn: '2021012410', name: 'Sneha Kulkarni', reason: 'Duplicate PRN found in current batch' },
-      ],
+  // TanStack Query to fetch live upload logs
+  const { data, isLoading } = useQuery({
+    queryKey: ['uploadLogs', role],
+    queryFn: async () => {
+      try {
+        return await getUploadLogsApi();
+      } catch (err) {
+        return null;
+      }
     },
-    {
-      id: 102,
-      batchId: 'BATCH_20260908_02',
-      uploadedBy: 'Computer Dept Coordinator',
-      department: 'Computer',
-      date: '2026-09-08 11:15',
-      totalRows: 120,
-      successCount: 120,
-      errorCount: 0,
-      status: 'Success',
-      errorsList: [],
-    },
-    {
-      id: 103,
-      batchId: 'BATCH_20260902_01',
-      uploadedBy: 'IT Dept Coordinator',
-      department: 'IT',
-      date: '2026-09-02 16:45',
-      totalRows: 110,
-      successCount: 108,
-      errorCount: 2,
-      status: 'Completed with Warnings',
-      errorsList: [
-        { row: 12, prn: '2021013401', name: 'Rohan Joshi', reason: 'Missing mandatory AdmissionYear field' },
-        { row: 44, prn: '2021013433', name: 'Aniket More', reason: 'Active backlogs count cannot be negative' },
-      ],
-    },
-  ];
+  });
 
-  const logsList = isOfficer
-    ? fallbackLogs
-    : fallbackLogs.filter((l) => l.department === (user?.departmentName || 'Computer'));
+  const rawLogs = data?.data || (Array.isArray(data) ? data : []);
+
+  const logsList = rawLogs.map((log) => {
+    let parsedErrors = [];
+    if (log.errorsJson) {
+      if (typeof log.errorsJson === 'string') {
+        try {
+          parsedErrors = JSON.parse(log.errorsJson);
+        } catch (e) {
+          parsedErrors = [];
+        }
+      } else if (Array.isArray(log.errorsJson)) {
+        parsedErrors = log.errorsJson;
+      }
+    } else if (Array.isArray(log.errorsList)) {
+      parsedErrors = log.errorsList;
+    }
+
+    return {
+      id: log.id,
+      batchId: log.fileName || `BATCH_${log.id}`,
+      uploadedBy: log.uploader?.name || log.uploadedBy || 'T&P Officer',
+      department: log.department || 'College-wide',
+      date: log.createdAt ? new Date(log.createdAt).toLocaleString() : (log.date || 'N/A'),
+      totalRows: log.totalRows || 0,
+      successCount: log.successCount || 0,
+      errorCount: log.errorCount || 0,
+      status: (log.errorCount || 0) === 0 ? 'Success' : 'Completed with Warnings',
+      errorsList: parsedErrors,
+    };
+  });
 
   const handleDownloadErrorsCsv = (log) => {
     if (!log.errorsList || log.errorsList.length === 0) return;
     const csvContent =
       'data:text/csv;charset=utf-8,' +
       'RowNumber,PRN,StudentName,ErrorReason\n' +
-      log.errorsList.map((err) => `${err.row},${err.prn},"${err.name}","${err.reason}"`).join('\n');
+      log.errorsList.map((err) => `${err.row || err.rowNumber || 'N/A'},${err.prn || 'N/A'},"${err.name || err.studentName || 'N/A'}","${err.reason || err.error || err.message || 'Validation Error'}"`).join('\n');
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Upload_Errors_${log.batchId}.csv`);
+    link.setAttribute('download', `Upload_Errors_${log.batchId.replace(/[^a-zA-Z0-9_-]/g, '_')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -105,65 +100,75 @@ export function UploadLogsPage() {
       </div>
 
       {/* Logs Table */}
-      <div className="bg-bg-surface border border-border-subtle rounded-xl shadow-2xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="bg-bg-base border-b border-border-subtle text-text-muted font-bold uppercase tracking-wider">
-                <th className="py-3 px-4">Batch ID</th>
-                <th className="py-3 px-4">Uploaded By</th>
-                <th className="py-3 px-4">Department</th>
-                <th className="py-3 px-4">Timestamp</th>
-                <th className="py-3 px-4">Total Rows</th>
-                <th className="py-3 px-4">Success</th>
-                <th className="py-3 px-4">Errors</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-subtle text-text-primary">
-              {logsList.map((log) => (
-                <tr
-                  key={log.id}
-                  onClick={() => setSelectedLog(log)}
-                  className="hover:bg-bg-base cursor-pointer transition-colors"
-                >
-                  <td className="py-3.5 px-4 font-mono font-bold text-primary-900">{log.batchId}</td>
-                  <td className="py-3.5 px-4 font-semibold">{log.uploadedBy}</td>
-                  <td className="py-3.5 px-4 text-text-secondary">{log.department}</td>
-                  <td className="py-3.5 px-4 text-text-muted">{log.date}</td>
-                  <td className="py-3.5 px-4 font-mono font-medium">{log.totalRows}</td>
-                  <td className="py-3.5 px-4 font-mono font-bold text-success-600">{log.successCount}</td>
-                  <td className="py-3.5 px-4 font-mono font-bold text-error-600">{log.errorCount}</td>
-                  <td className="py-3.5 px-4">
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                        log.errorCount === 0
-                          ? 'bg-success-100 text-success-600'
-                          : 'bg-warning-100 text-warning-600'
-                      }`}
-                    >
-                      {log.status}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedLog(log);
-                      }}
-                      className="px-2.5 py-1 bg-primary-100 text-primary-900 font-semibold rounded text-[11px] hover:bg-primary-900 hover:text-white transition-colors"
-                    >
-                      View Breakdown
-                    </button>
-                  </td>
+      {isLoading ? (
+        <Skeleton className="h-64 w-full rounded-xl" />
+      ) : logsList.length === 0 ? (
+        <EmptyState
+          title="No data upload logs found"
+          description="Excel batch upload audit records and validation breakdowns will appear here once student data sheets are imported."
+          icon={History}
+        />
+      ) : (
+        <div className="bg-bg-surface border border-border-subtle rounded-xl shadow-2xs overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-bg-base border-b border-border-subtle text-text-muted font-bold uppercase tracking-wider">
+                  <th className="py-3 px-4">Batch ID / File</th>
+                  <th className="py-3 px-4">Uploaded By</th>
+                  <th className="py-3 px-4">Department</th>
+                  <th className="py-3 px-4">Timestamp</th>
+                  <th className="py-3 px-4">Total Rows</th>
+                  <th className="py-3 px-4">Success</th>
+                  <th className="py-3 px-4">Errors</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border-subtle text-text-primary">
+                {logsList.map((log) => (
+                  <tr
+                    key={log.id}
+                    onClick={() => setSelectedLog(log)}
+                    className="hover:bg-bg-base cursor-pointer transition-colors"
+                  >
+                    <td className="py-3.5 px-4 font-mono font-bold text-primary-900">{log.batchId}</td>
+                    <td className="py-3.5 px-4 font-semibold">{log.uploadedBy}</td>
+                    <td className="py-3.5 px-4 text-text-secondary">{log.department}</td>
+                    <td className="py-3.5 px-4 text-text-muted">{log.date}</td>
+                    <td className="py-3.5 px-4 font-mono font-medium">{log.totalRows}</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-success-600">{log.successCount}</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-error-600">{log.errorCount}</td>
+                    <td className="py-3.5 px-4">
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                          log.errorCount === 0
+                            ? 'bg-success-100 text-success-600'
+                            : 'bg-warning-100 text-warning-600'
+                        }`}
+                      >
+                        {log.status}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedLog(log);
+                        }}
+                        className="px-2.5 py-1 bg-primary-100 text-primary-900 font-semibold rounded text-[11px] hover:bg-primary-900 hover:text-white transition-colors"
+                      >
+                        View Breakdown
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Row-level Error Breakdown Modal */}
       {selectedLog && (
