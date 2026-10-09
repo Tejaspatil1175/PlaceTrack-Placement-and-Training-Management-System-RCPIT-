@@ -80,8 +80,18 @@ export function StudentImportPage() {
       setUploadResult(res);
       setCurrentStep(3);
     } catch (err) {
-      console.warn('Real upload backend attempt:', err?.response?.data || err.message);
-      const errMsg = err?.response?.data?.message || 'Upload failed. Please check Excel headers and data format.';
+      console.warn('Upload backend attempt error:', err?.response?.data || err);
+      const data = err?.response?.data;
+      let errMsg = data?.message || data?.error || err.message || 'Upload failed. Please check Excel headers and data format.';
+      
+      if (data?.details?.error) {
+        errMsg = data.details.error;
+      } else if (data?.details?.missingHeaders?.length) {
+        errMsg = `Missing required column headers: [${data.details.missingHeaders.slice(0, 5).join(', ')}${data.details.missingHeaders.length > 5 ? '...' : ''}]`;
+      } else if (data?.details?.unknownHeaders?.length) {
+        errMsg = `Unrecognized column headers found: [${data.details.unknownHeaders.join(', ')}]`;
+      }
+
       setUploadError(errMsg);
     } finally {
       setIsUploading(false);

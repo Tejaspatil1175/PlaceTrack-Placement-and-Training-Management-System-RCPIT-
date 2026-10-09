@@ -33,6 +33,7 @@ const errorHandler = (err, req, res, next) => {
   const responsePayload = {
     success: false,
     message,
+    ...(err.details && { details: err.details }),
     ...(errors && { errors }),
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   };
