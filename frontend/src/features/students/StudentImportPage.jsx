@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { bulkUploadStudentsApi } from '../../api/students';
+import { bulkUploadStudentsApi, downloadTemplateApi } from '../../api/students';
 import {
   FileSpreadsheet,
   Download,
@@ -42,30 +42,15 @@ export function StudentImportPage() {
 
     try {
       const formData = new FormData();
-      formData.append('excel', file);
+      formData.append('file', file);
 
       const res = await bulkUploadStudentsApi(formData);
       setUploadResult(res);
       setCurrentStep(3);
     } catch (err) {
       console.warn('Real upload backend attempt:', err?.response?.data || err.message);
-
-      // Fallback mock validation result matching 44 Excel headers contract
-      const mockResult = {
-        summary: {
-          totalRows: 60,
-          successCount: 58,
-          errorCount: 2,
-        },
-        rows: [
-          { row: 2, prn: '2021012345', name: 'Rahul Ramesh Sharma', status: 'Valid', message: 'Ready to import (Sem 1-6 SGPA)' },
-          { row: 3, prn: '2021012346', name: 'Priya Suresh Patel', status: 'Valid', message: 'Ready to import (Sem 1-6 SGPA)' },
-          { row: 14, prn: '2021012399', name: 'Kunal Patil', status: 'Error', message: 'Invalid SGPA in SEM4_SGPA: 12.00 (Must be 0.00 - 10.00)' },
-          { row: 25, prn: '2021012410', name: 'Sneha Kulkarni', status: 'Error', message: 'Duplicate PRN found in current batch' },
-        ],
-      };
-      setUploadResult(mockResult);
-      setCurrentStep(3);
+      const errMsg = err?.response?.data?.message || 'Upload failed. Please check Excel headers and data format.';
+      setUploadError(errMsg);
     } finally {
       setIsUploading(false);
     }
@@ -78,28 +63,19 @@ export function StudentImportPage() {
     }, 1500);
   };
 
-  const handleDownloadTemplate = () => {
-    const csvContent =
-      'data:text/csv;charset=utf-8,' +
-      'PRN,Name,Email,Phone,DOB,Gender,Category,Branch,Division,AdmissionYear,CurrentSemester,Address,' +
-      'SEM1_SGPA,SEM1_CREDITS,SEM1_NEW_BACKLOGS,SEM1_CLEARED_BACKLOGS,' +
-      'SEM2_SGPA,SEM2_CREDITS,SEM2_NEW_BACKLOGS,SEM2_CLEARED_BACKLOGS,' +
-      'SEM3_SGPA,SEM3_CREDITS,SEM3_NEW_BACKLOGS,SEM3_CLEARED_BACKLOGS,' +
-      'SEM4_SGPA,SEM4_CREDITS,SEM4_NEW_BACKLOGS,SEM4_CLEARED_BACKLOGS,' +
-      'SEM5_SGPA,SEM5_CREDITS,SEM5_NEW_BACKLOGS,SEM5_CLEARED_BACKLOGS,' +
-      'SEM6_SGPA,SEM6_CREDITS,SEM6_NEW_BACKLOGS,SEM6_CLEARED_BACKLOGS,' +
-      'SEM7_SGPA,SEM7_CREDITS,SEM7_NEW_BACKLOGS,SEM7_CLEARED_BACKLOGS,' +
-      'SEM8_SGPA,SEM8_CREDITS,SEM8_NEW_BACKLOGS,SEM8_CLEARED_BACKLOGS\n' +
-      '2021012345,Rahul Ramesh Sharma,rahul.sharma@rcpit.ac.in,9876543210,2003-05-15,Male,OPEN,Computer,A,2021,7,Shirpur,' +
-      '8.40,22,0,0,8.60,24,0,0,8.80,22,0,0,8.90,24,0,0,9.00,22,0,0,8.80,22,0,0,,,,,,,,';
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', 'PlaceTrack_Student_Import_Template.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadTemplate = async () => {
+    try {
+      const blob = await downloadTemplateApi();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'PlaceTrack_Student_Template.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (err) {
+      console.error('Failed to download official template:', err);
+    }
   };
 
   return (

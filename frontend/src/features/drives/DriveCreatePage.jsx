@@ -96,12 +96,24 @@ export function DriveCreatePage() {
     setIsSubmitting(true);
 
     try {
-      await createDriveApi(data);
+      const payload = {
+        companyName: data.companyName,
+        role: data.jobTitle || data.role,
+        description: data.description,
+        ctc: parseFloat(data.salaryPackage || data.ctc || 0),
+        minCgpa: Number(data.minCgpa),
+        maxActiveBacklogs: Number(data.maxBacklogs || data.maxActiveBacklogs || 0),
+        allowedBranches: data.allowedBranches,
+        minSemester: Number(data.minSemester),
+        deadline: new Date(data.deadline).toISOString(),
+        status: 'UPCOMING',
+      };
+
+      await createDriveApi(payload);
       navigate('/drives');
     } catch (err) {
-      console.warn('Real create drive backend attempt:', err?.response?.data || err.message);
-      // Demo fallback success
-      navigate('/drives');
+      console.error('Real create drive backend attempt error:', err?.response?.data || err.message);
+      setServerError(err?.response?.data?.message || 'Failed to create placement drive. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

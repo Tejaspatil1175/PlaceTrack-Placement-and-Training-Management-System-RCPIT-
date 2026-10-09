@@ -58,12 +58,26 @@ export function NotificationCreatePage() {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      await createNotificationApi(data);
+      const targetType = data.audienceScope === 'college_wide' ? 'ALL' : 'DEPARTMENT';
+      let typeEnum = 'GENERAL';
+      if (data.type === 'drive_update') typeEnum = 'DRIVE';
+      else if (data.type === 'action_required') typeEnum = 'INFO';
+
+      const payload = {
+        title: data.title,
+        message: data.body,
+        targetType,
+        targetDepartmentId: targetType === 'DEPARTMENT' ? (user?.departmentId || null) : null,
+        type: typeEnum,
+        sendEmailBroadcast: false,
+      };
+
+      await createNotificationApi(payload);
       addToast('Announcement broadcasted successfully!', 'success');
       navigate('/notifications');
     } catch (err) {
-      addToast('Announcement broadcasted successfully! (Demo mode)', 'success');
-      navigate('/notifications');
+      console.error('Real notification creation error:', err);
+      addToast(err?.response?.data?.message || 'Failed to broadcast announcement', 'error');
     } finally {
       setIsSubmitting(false);
     }

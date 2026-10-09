@@ -1,64 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, Users, GraduationCap, Briefcase, ArrowRight, Info } from 'lucide-react';
+import { getDepartmentsApi, createDepartmentApi } from '../../api/departments';
+import { useToast } from '../../components/ui/Toast';
+import { Building2, Users, GraduationCap, Briefcase, Plus, CheckCircle, AlertCircle } from 'lucide-react';
 
 export function DepartmentsPage() {
-  const departments = [
-    {
-      id: 1,
-      name: 'Computer Engineering',
-      code: 'COMP',
-      coordinator: 'Prof. Aniket Joshi',
-      studentCount: 140,
-      placedCount: 82,
-      activeDrives: 18,
-    },
-    {
-      id: 2,
-      name: 'Information Technology',
-      code: 'IT',
-      coordinator: 'Prof. Sunita Patil',
-      studentCount: 110,
-      placedCount: 64,
-      activeDrives: 16,
-    },
-    {
-      id: 3,
-      name: 'AI & Data Science',
-      code: 'AI&DS',
-      coordinator: 'Prof. Rajesh Kulkarni',
-      studentCount: 90,
-      placedCount: 50,
-      activeDrives: 14,
-    },
-    {
-      id: 4,
-      name: 'Electronics & Telecommunication',
-      code: 'ENTC',
-      coordinator: 'Prof. Mahesh Chaudhari',
-      studentCount: 100,
-      placedCount: 42,
-      activeDrives: 12,
-    },
-    {
-      id: 5,
-      name: 'Mechanical Engineering',
-      code: 'MECH',
-      coordinator: 'Prof. Pravin Marathe',
-      studentCount: 60,
-      placedCount: 22,
-      activeDrives: 8,
-    },
-    {
-      id: 6,
-      name: 'Civil Engineering',
-      code: 'CIVIL',
-      coordinator: 'Unassigned',
-      studentCount: 40,
-      placedCount: 12,
-      activeDrives: 5,
-    },
-  ];
+  const { addToast } = useToast();
+  const [departments, setDepartments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [deptName, setDeptName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const fetchDepartments = async () => {
+    setIsLoading(true);
+    try {
+      const res = await getDepartmentsApi();
+      const list = res.data || res || [];
+      setDepartments(list);
+    } catch (err) {
+      console.warn('Could not load departments from API:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
+
+  const handleCreateDepartment = async (e) => {
+    e.preventDefault();
+    if (!deptName.trim()) return;
+    setIsSubmitting(true);
+    try {
+      await createDepartmentApi({ name: deptName.trim() });
+      addToast(`Department '${deptName.trim()}' created successfully!`, 'success');
+      setDeptName('');
+      setShowAddModal(false);
+      fetchDepartments();
+    } catch (err) {
+      console.error('Error creating department:', err);
+      addToast(err?.response?.data?.message || 'Failed to create department', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -73,69 +60,140 @@ export function DepartmentsPage() {
               Departments Management
             </h1>
             <p className="text-text-secondary text-sm mt-0.5">
-              Overview of RCPIT engineering departments, assigned coordinators, & placement participation.
+              Overview of RCPIT engineering departments, assigned coordinators, & student rosters.
             </p>
           </div>
         </div>
+
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center justify-center space-x-2 px-4 py-2.5 bg-primary-900 hover:bg-primary-700 text-white font-heading font-medium text-xs rounded-lg shadow-sm transition-all shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Department</span>
+        </button>
       </div>
 
-      {/* Contract Gap Callout Banner */}
-      <div className="p-4 bg-info-100 border border-info-600/30 rounded-xl flex items-center space-x-3 text-xs text-text-primary">
-        <Info className="w-4 h-4 text-info-600 shrink-0" />
-        <span>
-          Department master data is populated via seed scripts. Inline department creation is omitted per the backend contract specification.
-        </span>
-      </div>
+      {/* Add Department Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl border border-border-subtle">
+            <h3 className="font-heading text-lg font-bold text-text-primary mb-2">
+              Create New Department
+            </h3>
+            <p className="text-xs text-text-secondary mb-4">
+              Enter the official branch / discipline name as registered at RCPIT.
+            </p>
+            <form onSubmit={handleCreateDepartment} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-text-primary mb-1">
+                  Department Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Electrical Engineering"
+                  value={deptName}
+                  onChange={(e) => setDeptName(e.target.value)}
+                  className="w-full text-xs p-2.5 rounded-lg border border-border-subtle bg-bg-base focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  required
+                />
+              </div>
+              <div className="flex justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 border border-border-subtle rounded-lg text-xs font-semibold text-text-secondary hover:bg-bg-base"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !deptName.trim()}
+                  className="px-4 py-2 bg-primary-900 hover:bg-primary-700 text-white rounded-lg text-xs font-semibold disabled:opacity-60"
+                >
+                  {isSubmitting ? 'Creating...' : 'Save Department'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Department Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {departments.map((dept) => (
-          <div key={dept.id} className="bg-bg-surface border border-border-subtle rounded-xl p-5 shadow-2xs flex flex-col justify-between space-y-4 hover:shadow-xs transition-shadow">
-            <div>
-              <div className="flex items-start justify-between">
+      {isLoading ? (
+        <div className="p-8 text-center text-xs text-text-muted bg-white rounded-xl border border-border-subtle">
+          Loading departments from database...
+        </div>
+      ) : departments.length === 0 ? (
+        <div className="p-8 text-center text-xs text-text-muted bg-white rounded-xl border border-border-subtle">
+          No departments registered yet. Click "Add Department" to create one.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {departments.map((dept) => {
+            const coordinators = dept.users || [];
+            return (
+              <div
+                key={dept.id}
+                className="bg-bg-surface border border-border-subtle rounded-xl p-5 shadow-2xs flex flex-col justify-between space-y-4 hover:shadow-xs transition-shadow"
+              >
                 <div>
-                  <span className="text-[10px] font-bold font-mono uppercase px-2 py-0.5 rounded bg-primary-100 text-primary-900">
-                    {dept.code}
-                  </span>
-                  <h3 className="font-heading text-lg font-bold text-primary-900 mt-1">
-                    {dept.name}
-                  </h3>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold font-mono uppercase px-2 py-0.5 rounded bg-primary-100 text-primary-900">
+                        DEPT #{dept.id}
+                      </span>
+                      <h3 className="font-heading text-lg font-bold text-primary-900 mt-1">
+                        {dept.name}
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 space-y-2 text-xs">
+                    <div className="p-2.5 bg-bg-base rounded-lg border border-border-subtle">
+                      <span className="block text-[10px] text-text-muted font-bold uppercase mb-1">
+                        Assigned Coordinator(s)
+                      </span>
+                      {coordinators.length > 0 ? (
+                        <div className="space-y-1">
+                          {coordinators.map((c) => (
+                            <div key={c.id} className="font-semibold text-text-primary">
+                              {c.name}{' '}
+                              <span className="text-text-muted font-normal text-[11px]">
+                                ({c.email})
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-text-muted italic">No coordinator assigned</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Links */}
+                <div className="pt-3 border-t border-border-subtle flex items-center justify-between text-xs font-semibold">
+                  <Link
+                    to="/students"
+                    className="text-primary-600 hover:text-primary-800 inline-flex items-center space-x-1"
+                  >
+                    <GraduationCap className="w-3.5 h-3.5" />
+                    <span>View Students</span>
+                  </Link>
+                  <Link
+                    to="/coordinators"
+                    className="text-primary-600 hover:text-primary-800 inline-flex items-center space-x-1"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span>Manage Coordinator</span>
+                  </Link>
                 </div>
               </div>
-
-              <div className="mt-3 space-y-2 text-xs">
-                <div className="flex items-center justify-between p-2 bg-bg-base rounded border border-border-subtle">
-                  <span className="text-text-muted font-medium">Assigned Coordinator</span>
-                  <span className="font-semibold text-text-primary">{dept.coordinator}</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-center">
-                  <div className="p-2 bg-bg-base rounded border border-border-subtle">
-                    <span className="block text-[10px] text-text-muted font-semibold uppercase">Total Students</span>
-                    <span className="font-heading font-bold text-sm text-primary-700">{dept.studentCount}</span>
-                  </div>
-                  <div className="p-2 bg-bg-base rounded border border-border-subtle">
-                    <span className="block text-[10px] text-text-muted font-semibold uppercase">Active Drives</span>
-                    <span className="font-heading font-bold text-sm text-accent-500">{dept.activeDrives}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Links */}
-            <div className="pt-3 border-t border-border-subtle flex items-center justify-between text-xs font-semibold">
-              <Link to="/students" className="text-primary-500 hover:text-primary-700 inline-flex items-center space-x-1">
-                <GraduationCap className="w-3.5 h-3.5" />
-                <span>View Students</span>
-              </Link>
-              <Link to="/drives" className="text-primary-500 hover:text-primary-700 inline-flex items-center space-x-1">
-                <Briefcase className="w-3.5 h-3.5" />
-                <span>View Drives</span>
-              </Link>
-            </div>
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
