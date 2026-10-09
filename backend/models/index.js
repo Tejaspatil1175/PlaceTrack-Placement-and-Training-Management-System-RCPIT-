@@ -106,6 +106,29 @@ Notification.belongsTo(Department, {
   as: 'targetDepartment'
 });
 
+// 8. Event Associations
+const Event = require('./Event');
+
+User.hasMany(Event, {
+  foreignKey: 'createdBy',
+  as: 'events',
+  onDelete: 'CASCADE'
+});
+Event.belongsTo(User, {
+  foreignKey: 'createdBy',
+  as: 'creator'
+});
+
+Department.hasMany(Event, {
+  foreignKey: 'departmentId',
+  as: 'events',
+  onDelete: 'SET NULL'
+});
+Event.belongsTo(Department, {
+  foreignKey: 'departmentId',
+  as: 'department'
+});
+
 module.exports = {
   sequelize,
   Department,
@@ -115,7 +138,9 @@ module.exports = {
   ExcelUploadLog,
   Drive,
   Application,
-  Notification
+  Notification,
+  Event
 };
+
 
 
